@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   build:
@@ -38,8 +39,20 @@ jobs:
           name: APK Build ${{ steps.tag.outputs.TAG }}
           files: app/build/outputs/apk/release/app-armeabi-v7a-release.apk
 
-      - name: Upload APK (artifact)
-        uses: actions/upload-artifact@v4
-        with:
-          name: apk
-          path: app/build/outputs/apk/release/app-armeabi-v7a-release.apk
+      # ⏱️ WAIT 60 SECONDS
+      - name: Wait before deleting release
+        run: sleep 60
+
+      # ❌ DELETE RELEASE
+      - name: Delete GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete "${{ steps.tag.outputs.TAG }}" --yes
+
+      # ❌ DELETE TAG
+      - name: Delete Git tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push --delete origin "${{ steps.tag.outputs.TAG }}"
