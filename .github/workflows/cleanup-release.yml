@@ -1,3 +1,16 @@
+name: Cleanup Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to delete"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
 jobs:
   cleanup:
     runs-on: ubuntu-latest
@@ -9,11 +22,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # --repo added here
-          gh release delete "${{ inputs.tag }}" --repo ${{ github.repository }} --yes || true
+          gh release delete "${{ inputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --yes || true
 
       - name: Delete tag (no git needed)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh api -X DELETE "repos/${{ github.repository }}/git/refs/tags/${{ inputs.tag }}" || true
+          gh api -X DELETE \
+            "repos/${{ github.repository }}/git/refs/tags/${{ inputs.tag }}" || true
