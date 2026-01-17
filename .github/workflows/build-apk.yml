@@ -2,6 +2,15 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      username:
+        description: 'WiFi login username'
+        required: true
+        type: string
+      password:
+        description: 'WiFi login password'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -18,6 +27,20 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: gradle
+
+      - name: Inject credentials into MainActivity.java
+        run: |
+          FILE="app/src/main/java/wifi/login/MainActivity.java"
+          USERNAME="${{ inputs.username }}"
+          PASSWORD="${{ inputs.password }}"
+
+          # Replace the payload line with user credentials
+          sed -i "s|mode=191&username=[^&]*&password=[^&]*&|mode=191\&username=${USERNAME}\&password=${PASSWORD}\&|g" "$FILE"
+
+          # Replace "Connecting..." with "Connecting with {username}..."
+          sed -i "s|setText(\"Connecting...\");|setText(\"Connecting with ${USERNAME}...\");|g" "$FILE"
+
+          echo "✅ Credentials injected for user: $USERNAME"
 
       - run: chmod +x gradlew
       - run: ./gradlew assembleRelease
