@@ -1,11 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:label="Pcampus Login"
+        android:label="IOE Login"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
-            android:label="Pcampus Login"
+            android:label="IOE Login"
             android:icon="@mipmap/ic_launcher"
             android:theme="@android:style/Theme.Light.NoTitleBar"
             android:exported="true">

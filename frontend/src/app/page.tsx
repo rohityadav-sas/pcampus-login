@@ -115,6 +115,11 @@ export default function Home() {
             clearInterval(t);
             setBusy(false);
 
+            // Fetch final step statuses one more time
+            if (s.runId) {
+              fetchSteps(s.runId);
+            }
+
             if (s.conclusion === "success") {
               // Pass build_id to latest-apk endpoint to get our specific APK
               const apkUrl = myBuildId 
@@ -266,6 +271,7 @@ export default function Home() {
                       type="password"
                       id="password"
                       ref={passwordRef}
+                      pattern="^[0-9-]+$"
                       onKeyDown={(e)=> {if (e.key==="Enter") build()}}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -285,7 +291,7 @@ export default function Home() {
                   <button
                     onClick={build}
                     disabled={!canBuild}
-                    className={`w-full px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
+                    className={`w-full px-6 py-3 rounded-lg font-semibold flex items-center justify-center cursor-pointer gap-2 transition-all duration-300 ${
                       !canBuild
                         ? "bg-[hsl(222,30%,14%)] text-[hsl(215,20%,55%)] cursor-not-allowed"
                         : "bg-[hsl(173,80%,50%)] text-[hsl(222,47%,6%)] hover:bg-[hsl(173,80%,55%)] shadow-lg shadow-[hsl(173,80%,50%)]/30"
