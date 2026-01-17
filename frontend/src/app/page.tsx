@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type StatusState = "idle" | "queued" | "in_progress" | "success" | "failure";
 
@@ -43,6 +43,7 @@ export default function Home() {
   const [apkName, setApkName] = useState("");
   const [error, setError] = useState("");
   const [steps, setSteps] = useState<Step[]>([]);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   const canBuild = username.trim() !== "" && password.trim() !== "" && !busy;
 
@@ -239,6 +240,7 @@ export default function Home() {
                     </div>
                     <input
                       type="text"
+                      onKeyDown={e=> {if (e.key==="Enter") passwordRef.current?.focus()}}
                       id="username"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
@@ -263,6 +265,8 @@ export default function Home() {
                     <input
                       type="password"
                       id="password"
+                      ref={passwordRef}
+                      onKeyDown={(e)=> {if (e.key==="Enter") build()}}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Your WiFi password"
