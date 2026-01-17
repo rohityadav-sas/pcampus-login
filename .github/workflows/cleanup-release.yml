@@ -24,8 +24,8 @@ jobs:
         run: |
           gh release delete "${{ inputs.tag }}" --yes || true
 
-      - name: Delete tag
+      - name: Delete tag (no git needed)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git push --delete origin "${{ inputs.tag }}" || true
+          gh api -X DELETE "repos/${{ github.repository }}/git/refs/tags/${{ inputs.tag }}" || true
