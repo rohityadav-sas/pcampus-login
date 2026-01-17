@@ -2,8 +2,8 @@
 
 > **One-tap WiFi login for Pulchowk Campus** — No more typing credentials every time!
 
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen?style=for-the-badge)](https://pulchowk-wifi-login-apk-builder.vercel.app)
-[![GitHub Actions](https://img.shields.io/badge/build-GitHub%20Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/rohityadav-sas/pulchowk-wifi-login-apk-builder/actions)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen?style=for-the-badge)](https://pcampus-login.vercel.app)
+[![GitHub Actions](https://img.shields.io/badge/build-GitHub%20Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/rohityadav-sas/pcampus-login/actions)
 [![Next.js](https://img.shields.io/badge/frontend-Next.js-000000?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com)
 
@@ -42,7 +42,7 @@ No browser. No typing. No waiting.
 └─────────────────┘      └──────────────────┘      └─────────────────┘
 ```
 
-1. Visit the [web app](https://pulchowk-wifi-login-apk-builder.vercel.app)
+1. Visit the [web app](https://pcampus-login.vercel.app)
 2. Enter your Pulchowk WiFi credentials
 3. Click **Build APK**
 4. Wait ~60 seconds while GitHub Actions builds your personalized APK
@@ -94,8 +94,8 @@ No browser. No typing. No waiting.
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/rohityadav-sas/pulchowk-wifi-login-apk-builder.git
-   cd pulchowk-wifi-login-apk-builder
+   git clone https://github.com/rohityadav-sas/pcampus-login.git
+   cd pcampus-login
    ```
 
 2. **Install frontend dependencies**
@@ -110,7 +110,7 @@ No browser. No typing. No waiting.
    ```env
    GITHUB_TOKEN=ghp_your_token_here
    GITHUB_OWNER=rohityadav-sas
-   GITHUB_REPO=pulchowk-wifi-login-apk-builder
+   GITHUB_REPO=pcampus-login
    WORKFLOW_FILE=build-apk.yml
    ```
 
