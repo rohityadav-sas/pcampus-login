@@ -1,4 +1,4 @@
-# 📶 Pcampus Login
+# 📶 PCampus Login
 
 > **One-tap WiFi login for Pulchowk Campus** — No more typing credentials every time!
 

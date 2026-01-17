@@ -185,12 +185,12 @@ export default function Home() {
                 <img src="/logo.svg" alt="Logo" className="h-10 w-10 object-contain" />
               </div>
               <div>
-                <h1 className="font-bold text-lg">Pulchowk WiFi Login</h1>
+                <h1 className="font-bold text-lg">Pcampus Login</h1>
               </div>
             </div>
             
             <a 
-              href="https://github.com/rohityadav-sas/pulchowk-wifi-login-apk-builder"
+              href="https://github.com/rohityadav-sas/pcampus-login"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-[hsl(215,20%,55%)] hover:text-[hsl(173,80%,50%)] transition-colors"

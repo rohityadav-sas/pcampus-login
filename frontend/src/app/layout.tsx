@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pulchowk WiFi Login - APK Builder",
-  description: "Build your custom Pulchowk WiFi Login Android APK",
+  title: "Pcampus Login - APK Builder",
+  description: "Build your custom Pcampus Login Android APK",
   icons: {
     icon: "/logo.svg",
     shortcut: "/logo.svg",
