@@ -1,32 +1,14 @@
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const runId = searchParams.get('run_id')
+  const buildId = searchParams.get('build_id')
 
   const owner = process.env.GITHUB_OWNER
   const repo = process.env.GITHUB_REPO
   const token = process.env.GITHUB_TOKEN
 
-  // If run_id is provided, find the release created by that run
-  if (runId) {
-    // First, get the run details to find the tag
-    const runRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github+json',
-        },
-        cache: 'no-store',
-      },
-    )
-
-    if (!runRes.ok) {
-      return new Response(await runRes.text(), { status: runRes.status })
-    }
-
-    const run = await runRes.json()
-    // The tag format is "apk-{run_id}" as defined in build-apk.yml
-    const expectedTag = `apk-${runId}`
+  // If build_id is provided, find the release with that specific tag
+  if (buildId) {
+    const expectedTag = `apk-${buildId}`
 
     // Find release with this tag
     const relRes = await fetch(

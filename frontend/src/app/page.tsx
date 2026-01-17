@@ -38,7 +38,7 @@ export default function Home() {
   const [status, setStatus] = useState("none");
   const [conclusion, setConclusion] = useState<string | null>(null);
   const [runUrl, setRunUrl] = useState("");
-  const [runId, setRunId] = useState<number | null>(null);
+  const [buildId, setBuildId] = useState<string | null>(null);
   const [apkUrl, setApkUrl] = useState("");
   const [apkName, setApkName] = useState("");
   const [error, setError] = useState("");
@@ -65,7 +65,7 @@ export default function Home() {
     setStatus("queued");
     setConclusion(null);
     setRunUrl("");
-    setRunId(null);
+    setBuildId(null);
     setApkUrl("");
     setApkName("");
     setError("");
@@ -85,31 +85,27 @@ export default function Home() {
         return;
       }
 
-      // Get the run_id from the build response
+      // Get the build_id from the build response
       const buildResult = await r.json();
-      const myRunId = buildResult.runId;
+      const myBuildId = buildResult.buildId;
       
-      if (myRunId) {
-        setRunId(myRunId);
-        fetchSteps(myRunId);
+      if (myBuildId) {
+        setBuildId(myBuildId);
       }
 
       const t = setInterval(async () => {
         try {
-          // Pass run_id to status endpoint to get only our build's status
-          const statusUrl = myRunId 
-            ? `/api/status?run_id=${myRunId}` 
+          // Pass build_id to status endpoint to get our build's status
+          const statusUrl = myBuildId 
+            ? `/api/status?build_id=${myBuildId}` 
             : "/api/status";
           
           const s = await fetch(statusUrl, { cache: "no-store" }).then((x) =>
             x.json()
           );
           if (s.url) setRunUrl(s.url);
-          if (s.runId && !myRunId) {
-            setRunId(s.runId);
-          }
-          if (myRunId) {
-            fetchSteps(myRunId);
+          if (s.runId) {
+            fetchSteps(s.runId);
           }
           setStatus(s.status || "none");
           setConclusion(s.conclusion);
@@ -119,9 +115,9 @@ export default function Home() {
             setBusy(false);
 
             if (s.conclusion === "success") {
-              // Pass run_id to latest-apk endpoint to get only our APK
-              const apkUrl = myRunId 
-                ? `/api/latest-apk?run_id=${myRunId}` 
+              // Pass build_id to latest-apk endpoint to get our specific APK
+              const apkUrl = myBuildId 
+                ? `/api/latest-apk?build_id=${myBuildId}` 
                 : "/api/latest-apk";
               
               const a = await fetch(apkUrl, { cache: "no-store" }).then(

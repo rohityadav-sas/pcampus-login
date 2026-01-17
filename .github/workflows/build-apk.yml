@@ -11,6 +11,10 @@ on:
         description: 'WiFi login password'
         required: true
         type: string
+      build_id:
+        description: 'Unique build identifier'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -57,7 +61,7 @@ jobs:
 
       - name: 🏷️ Creating download link
         id: tag
-        run: echo "TAG=apk-${GITHUB_RUN_ID}" >> $GITHUB_OUTPUT
+        run: echo "TAG=apk-${{ inputs.build_id }}" >> $GITHUB_OUTPUT
 
       - name: 📤 Uploading APK for download
         uses: softprops/action-gh-release@v2

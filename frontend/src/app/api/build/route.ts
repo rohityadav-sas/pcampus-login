@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
     return new Response('Username and password are required', { status: 400 })
   }
 
-  // Get current time before dispatch (to filter runs created after this)
-  const dispatchTime = new Date().toISOString()
+  // Generate a unique build ID to identify this specific build
+  const buildId = crypto.randomUUID()
 
-  // Dispatch the workflow
+  // Dispatch the workflow with the unique build_id
   const r = await fetch(
     `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/dispatches`,
     {
@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
         inputs: {
           username,
           password,
+          build_id: buildId,
         },
       }),
     },
@@ -49,54 +50,7 @@ export async function POST(request: NextRequest) {
     return new Response(await r.text(), { status: r.status })
   }
 
-  // Poll to find the newly created run (GitHub doesn't return run_id from dispatch)
-  // We look for runs created after our dispatch time
-  let runId: number | null = null
-
-  for (let attempt = 0; attempt < 10; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 1500)) // Wait 1.5s between attempts
-
-    const runsRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/runs?per_page=5&created=>${dispatchTime}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github+json',
-        },
-        cache: 'no-store',
-      },
-    )
-
-    if (runsRes.ok) {
-      const data = await runsRes.json()
-      // Find a run that was created after our dispatch
-      const run = data.workflow_runs?.find(
-        (r: any) => new Date(r.created_at) >= new Date(dispatchTime),
-      )
-      if (run) {
-        runId = run.id
-        break
-      }
-    }
-  }
-
-  if (!runId) {
-    // Fallback: get the most recent run if we couldn't find the exact one
-    const fallbackRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/runs?per_page=1`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github+json',
-        },
-        cache: 'no-store',
-      },
-    )
-    if (fallbackRes.ok) {
-      const data = await fallbackRes.json()
-      runId = data.workflow_runs?.[0]?.id || null
-    }
-  }
-
-  return Response.json({ ok: true, runId })
+  // Return the build_id immediately - no need to poll for run_id anymore
+  // The frontend will use build_id to find its release (tag: apk-{build_id})
+  return Response.json({ ok: true, buildId })
 }
