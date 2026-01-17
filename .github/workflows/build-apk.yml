@@ -5,28 +5,21 @@ on:
 
 permissions:
   contents: write
-  actions: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
           cache: gradle
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
-
-      - name: Build release APK
-        run: ./gradlew assembleRelease
+      - run: chmod +x gradlew
+      - run: ./gradlew assembleRelease
 
       - name: Create tag
         id: tag
@@ -39,20 +32,9 @@ jobs:
           name: APK Build ${{ steps.tag.outputs.TAG }}
           files: app/build/outputs/apk/release/app-armeabi-v7a-release.apk
 
-      # ⏱️ WAIT 60 SECONDS
-      - name: Wait before deleting release
-        run: sleep 60
-
-      # ❌ DELETE RELEASE
-      - name: Delete GitHub release
+      # NEW: trigger cleanup workflow asynchronously (no waiting)
+      - name: Trigger cleanup in 1 minute
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release delete "${{ steps.tag.outputs.TAG }}" --yes
-
-      # ❌ DELETE TAG
-      - name: Delete Git tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git push --delete origin "${{ steps.tag.outputs.TAG }}"
+          gh workflow run cleanup-release.yml -f tag="${{ steps.tag.outputs.TAG }}"
