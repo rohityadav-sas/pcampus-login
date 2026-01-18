@@ -15,11 +15,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Pcampus Login - APK Builder",
   description: "Build your custom Pcampus Login Android APK",
-  icons: {
-    icon: "/logo.svg",
-    shortcut: "/logo.svg",
-    apple: "/logo.svg",
-  },
 };
 
 export default function RootLayout({
