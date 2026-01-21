@@ -627,7 +627,7 @@ export default function Home() {
                         {formatTime(elapsedTime)}
                       </span>
                       <span className='text-xs text-[hsl(215,20%,55%)]'>
-                        Usually takes around 1 minute
+                        Usually takes around 50 seconds
                       </span>
                     </div>
 
