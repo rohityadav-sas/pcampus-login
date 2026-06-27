@@ -1,8 +1,17 @@
 package wifi.login;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -25,17 +34,64 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public class MainActivity extends Activity {
+    private TextView tv;
+    private ImageView retryBtn;
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
 
-        final TextView tv = new TextView(this);
+        FrameLayout root = new FrameLayout(this);
+        
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setGravity(Gravity.CENTER);
+        
+        tv = new TextView(this);
         tv.setText("Connecting...");
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 25);
+        tv.setGravity(Gravity.CENTER);
         int pad = (int) (16 * getResources().getDisplayMetrics().density);
         tv.setPadding(pad, pad, pad, pad);
-        setContentView(tv);
+        
+        retryBtn = new ImageView(this);
+        retryBtn.setImageResource(R.drawable.ic_retry);
+        retryBtn.setVisibility(View.GONE);
+        retryBtn.setPadding(pad, pad, pad, pad);
+        
+        retryBtn.setClickable(true);
+        retryBtn.setFocusable(true);
 
+        retryBtn.setOnClickListener(v -> {
+            // Spin 360 deg
+            ObjectAnimator spin = ObjectAnimator.ofFloat(retryBtn, "rotation", 0f, 360f);
+            spin.setDuration(300);
+            spin.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    retryBtn.setVisibility(View.GONE);
+                    retryBtn.setRotation(0f); // Reset for next time
+                    performLogin();
+                }
+            });
+            spin.start();
+        });
+
+        container.addView(tv);
+        container.addView(retryBtn);
+        
+        root.addView(container, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 
+                ViewGroup.LayoutParams.MATCH_PARENT, 
+                Gravity.CENTER));
+        
+        setContentView(root);
+
+        performLogin();
+    }
+
+    private void performLogin() {
+        tv.setText("Connecting...");
         new Thread(() -> {
             String result;
             try {
@@ -81,13 +137,13 @@ public class MainActivity extends Activity {
                 conn.disconnect();
 
                 String body = bodySb.toString();
-
-                String msg = parseFirstTagText(body, "message"); // e.g. "You are signed in as [username]."
+                String msg = parseFirstTagText(body, "message");
                 boolean ok = (code >= 200 && code < 400) && isLoginSuccessful(msg);
 
                 if (ok) {
                     result = "Login successful";
                     finish();
+                    return;
                 } else if (msg != null && msg.length() > 0) {
                     result = msg;
                 } else {
@@ -95,15 +151,14 @@ public class MainActivity extends Activity {
                 }
 
             } catch (Exception e) {
-                if (e instanceof java.net.SocketTimeoutException) {
-                    result = "Request timeout";
-                } else {
-                    result = e.toString();
-                }
+                result = (e instanceof java.net.SocketTimeoutException) ? "Request timeout" : e.toString();
             }
 
             final String show = result;
-            runOnUiThread(() -> tv.setText(show));
+            runOnUiThread(() -> {
+                tv.setText(show);
+                retryBtn.setVisibility(View.VISIBLE);
+            });
         }).start();
     }
 
@@ -113,7 +168,6 @@ public class MainActivity extends Activity {
         return m.contains("success") || m.contains("signed in");
     }
 
-    // Minimal XML extraction: gets the text inside the first <tagName>...</tagName>
     private static String parseFirstTagText(String xml, String tagName) throws Exception {
         XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
         factory.setNamespaceAware(false);
