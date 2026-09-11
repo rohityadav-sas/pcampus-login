@@ -6,7 +6,19 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-if (-not $Source) { $Source = Join-Path $PSScriptRoot 'assets\icon\icon.svg' }
+if (-not $Source) {
+    $candidates = @('icon.svg', 'icon.png' | ForEach-Object { Join-Path $PSScriptRoot "assets\icon\$_" } | Where-Object { Test-Path -LiteralPath $_ })
+    if ($candidates.Count -eq 0) { throw 'Add assets/icon/icon.svg or a 1024x1024 icon.png. See docs/ICONS.md.' }
+    if ($candidates.Count -gt 1) { throw 'Both icon.svg and icon.png exist. Keep only one, or build with -IconSource assets/icon/icon.png (or icon.svg). See docs/ICONS.md.' }
+    $Source = $candidates[0]
+} elseif (-not [IO.Path]::IsPathRooted($Source)) {
+    $Source = Join-Path $PSScriptRoot $Source
+}
+if ([IO.Path]::GetExtension($Source) -ieq '.png') {
+    & (Join-Path $PSScriptRoot 'scripts\png-icon.ps1') -Source $Source -Background $Background
+    return
+}
+if ([IO.Path]::GetExtension($Source) -ine '.svg') { throw 'Only .svg and .png icons are supported. See docs/ICONS.md.' }
 $culture = [Globalization.CultureInfo]::InvariantCulture
 
 function Color([string]$value) {
@@ -73,5 +85,10 @@ foreach ($entry in $files.GetEnumerator()) {
     $destination = Join-Path $res $entry.Key
     New-Item -ItemType Directory -Force (Split-Path $destination) | Out-Null
     [IO.File]::WriteAllText($destination, $entry.Value + "`n", [Text.UTF8Encoding]::new($false))
+}
+# Remove only generated PNG resources when switching back to SVG.
+foreach ($relative in @('drawable-nodpi\ic_launcher_image.png','mipmap-mdpi\ic_launcher.png','mipmap-hdpi\ic_launcher.png','mipmap-xhdpi\ic_launcher.png','mipmap-xxhdpi\ic_launcher.png','mipmap-xxxhdpi\ic_launcher.png')) {
+    $old = Join-Path $res $relative
+    if (Test-Path -LiteralPath $old) { Remove-Item -LiteralPath $old -Force }
 }
 Write-Host '[OK] Launcher icons updated from SVG.'
