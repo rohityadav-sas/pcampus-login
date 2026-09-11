@@ -6,17 +6,36 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+trap {
+    Write-Host "[ERROR] $($_.Exception.GetBaseException().Message)" -ForegroundColor Red
+    exit 1
+}
 if (-not $Source) {
     $candidates = @('icon.svg', 'icon.png' | ForEach-Object { Join-Path $PSScriptRoot "assets\icon\$_" } | Where-Object { Test-Path -LiteralPath $_ })
     if ($candidates.Count -eq 0) { throw 'Add assets/icon/icon.svg or a 1024x1024 icon.png. See docs/ICONS.md.' }
-    if ($candidates.Count -gt 1) { throw 'Both icon.svg and icon.png exist. Keep only one, or build with -IconSource assets/icon/icon.png (or icon.svg). See docs/ICONS.md.' }
-    $Source = $candidates[0]
+    if ($candidates.Count -gt 1) {
+        if ($env:CI -or [Environment]::GetCommandLineArgs() -match '^-NonInteractive$') {
+            throw 'Both icons exist. Specify -Source assets/icon/icon.png (update-icon.ps1) or -IconSource assets/icon/icon.png (apk.ps1).'
+        }
+        Write-Host 'Both icon files are available. Choose one for this build:'
+        Write-Host '  1. SVG (icon.svg)'
+        Write-Host '  2. PNG (icon.png)'
+        Write-Host '  Q. Cancel'
+        do {
+            $choice = (Read-Host 'Choose 1 or 2').Trim().ToLowerInvariant()
+            if ($choice -in @('', 'q')) { Write-Host '[CANCELLED] No icon files changed.'; exit 1 }
+            if ($choice -notin @('1', '2', 'svg', 'png')) { Write-Host 'Please enter 1 for SVG, 2 for PNG, or Q to cancel.' -ForegroundColor Yellow }
+        } while ($choice -notin @('1', '2', 'svg', 'png'))
+        $name = if ($choice -in @('1', 'svg')) { 'icon.svg' } else { 'icon.png' }
+        $Source = Join-Path $PSScriptRoot "assets\icon\$name"
+    } else { $Source = $candidates[0] }
 } elseif (-not [IO.Path]::IsPathRooted($Source)) {
     $Source = Join-Path $PSScriptRoot $Source
 }
+if (-not (Test-Path -LiteralPath $Source -PathType Leaf)) { throw "Icon file not found: $Source" }
 if ([IO.Path]::GetExtension($Source) -ieq '.png') {
     & (Join-Path $PSScriptRoot 'scripts\png-icon.ps1') -Source $Source -Background $Background
-    return
+    exit 0
 }
 if ([IO.Path]::GetExtension($Source) -ine '.svg') { throw 'Only .svg and .png icons are supported. See docs/ICONS.md.' }
 $culture = [Globalization.CultureInfo]::InvariantCulture
@@ -92,3 +111,4 @@ foreach ($relative in @('drawable-nodpi\ic_launcher_image.png','mipmap-mdpi\ic_l
     if (Test-Path -LiteralPath $old) { Remove-Item -LiteralPath $old -Force }
 }
 Write-Host '[OK] Launcher icons updated from SVG.'
+exit 0
