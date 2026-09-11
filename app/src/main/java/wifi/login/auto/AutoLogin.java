@@ -35,40 +35,23 @@ final class AutoLogin {
         }
         return false;
     }
-    static String fingerprint(X509Certificate cert) throws Exception {
-        return android.util.Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(cert.getEncoded()), android.util.Base64.NO_WRAP);
-    }
-    static HttpsURLConnection connection(Network n, String pin, String[] observed) throws Exception {
+    // Verification is deliberately disabled for this fixed campus endpoint.
+    // HTTPS still encrypts traffic, but does not authenticate the server.
+    @android.annotation.SuppressLint("CustomX509TrustManager")
+    static HttpsURLConnection connection(Network n) throws Exception {
         SSLContext tls = SSLContext.getInstance("TLS");
         tls.init(null, new TrustManager[]{new X509TrustManager() {
             public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
             public void checkClientTrusted(X509Certificate[] chain, String auth) throws CertificateException { throw new CertificateException(); }
-            public void checkServerTrusted(X509Certificate[] chain, String auth) throws CertificateException {
-                try {
-                    String actual = fingerprint(chain[0]);
-                    if (pin != null && !MessageDigest.isEqual(pin.getBytes(StandardCharsets.UTF_8), actual.getBytes(StandardCharsets.UTF_8)))
-                        throw new CertificateException("Campus certificate changed");
-                    if (observed != null) observed[0] = actual;
-                } catch (CertificateException e) { throw e; } catch (Exception e) { throw new CertificateException(e); }
-            }
+            @android.annotation.SuppressLint("TrustAllX509TrustManager")
+            public void checkServerTrusted(X509Certificate[] chain, String auth) { }
         }}, new SecureRandom());
         HttpsURLConnection con = (HttpsURLConnection)n.openConnection(new URL(URL_STRING));
         con.setSSLSocketFactory(tls.getSocketFactory());
-        // The campus uses an IP-address URL and a private certificate; authenticate by its exact fingerprint.
         con.setHostnameVerifier((host, session) -> "10.100.1.1".equals(host));
         con.setInstanceFollowRedirects(false);
         con.setConnectTimeout(6000); con.setReadTimeout(6000);
         return con;
-    }
-    static void enroll(Context c, Network n) throws Exception {
-        if (!campus(c, n)) throw new IOException("Connect to campus Wi-Fi first");
-        String[] seen = new String[1];
-        HttpsURLConnection con = connection(n, null, seen);
-        try {
-            con.connect();
-            if (seen[0] == null) throw new IOException("Could not identify campus portal");
-            prefs(c).edit().putString("pin", seen[0]).commit();
-        } finally { con.disconnect(); }
     }
     static synchronized void record(Context c, String status) {
         String line = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date()) + "  " + status;
@@ -111,9 +94,7 @@ final class AutoLogin {
         HttpsURLConnection con = null;
         ScheduledExecutorService deadline = Executors.newSingleThreadScheduledExecutor();
         try {
-            String pin = prefs(c).getString("pin", "");
-            if (pin.isEmpty()) { enroll(c,n); pin=prefs(c).getString("pin", ""); }
-            con = connection(n, pin, null);
+            con = connection(n);
             final HttpsURLConnection active = con;
             deadline.schedule(active::disconnect, 10, TimeUnit.SECONDS);
             String body = "mode=191&username=" + URLEncoder.encode(prefs(c).getString("username", ""), "UTF-8")
@@ -145,7 +126,7 @@ final class AutoLogin {
                 cm(c).reportNetworkConnectivity(n, true);  return true;
             } else record(c, "Portal did not confirm login. Open the app to retry.");
         } catch (Exception e) {
-            record(c, e instanceof SSLException ? "Portal identity could not be verified" : "Login failed (" + e.getClass().getSimpleName() + "). Tap Log in now to retry.");
+            record(c, "Login failed (" + e.getClass().getSimpleName() + "). Tap Log in now to retry.");
         } finally {
             if (con != null) con.disconnect();
             deadline.shutdownNow();

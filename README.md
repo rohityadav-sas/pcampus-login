@@ -12,12 +12,12 @@ A native Android app for signing in to the Pulchowk campus Wi-Fi portal.
 
 | Branch | Implementation |
 | --- | --- |
-| `main` | Earlier API 23 connectivity broadcasts, original certificate pinning, and newer icon/build tooling. |
+| `main` | Earlier API 23 connectivity broadcasts, certificate verification disabled, and newer icon/build tooling. |
 | `android-15` | API 36 PendingIntent experiment. Known issue: subscription disappears after first delivery. |
 | `permanent-notification` | API 36 foreground-service listener with a permanent notification; separate Campus Wi-Fi FG app. |
 | `root` | Separate Campus Wi-Fi Root app using a privileged event listener, without a permanent notification. |
 
-FG and Root reconnects were tested on Android 11. Android 15/16 runtime testing remains pending. The three alternative branches disable certificate verification. Main restores the earlier version code too, so its APK is not an in-place upgrade over the API 36 build.
+FG and Root reconnects were tested on Android 11. Android 15/16 runtime testing remains pending. All four branches disable certificate verification. Main restores the earlier version code too, so its APK is not an in-place upgrade over the API 36 build.
 
 ## 🎬 Demo
 
