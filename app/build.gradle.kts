@@ -26,8 +26,8 @@ android {
         applicationId = "wifi.login.auto"
         minSdk = 23
         targetSdk = 23 // Deliberate legacy broadcast behavior; see README compatibility.
-        versionCode = 4
-        versionName = "1.3.0"
+        versionCode = 5
+        versionName = "1.3.1"
     }
 
     signingConfigs {
