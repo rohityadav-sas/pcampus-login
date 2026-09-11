@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [int]$MinimumJavaVersion = 17,
     [int]$MaximumJavaVersion = 24,
@@ -314,9 +314,21 @@ function Install-AndroidCli {
         Invoke-Download -Uri $AndroidCliInstallerUrl -Destination $installer -Name 'Android CLI installer'
 
         Write-Log 'Installing Android CLI for the current user...' 'INSTALL'
-        & $env:ComSpec /d /c "`"$installer`""
-        if ($LASTEXITCODE -ne 0) {
-            throw "Android CLI installer failed with exit code $LASTEXITCODE."
+
+        # Capture installer stdout so it is not emitted as part of this function's
+        # return value. Then print it explicitly for the user. Otherwise PowerShell
+        # would combine the installer text with the final android.exe path.
+        $installerOutput = & $env:ComSpec /d /c "`"$installer`""
+        $installerExitCode = $LASTEXITCODE
+
+        foreach ($line in @($installerOutput)) {
+            if ($null -ne $line -and "$line".Length -gt 0) {
+                Write-Host $line
+            }
+        }
+
+        if ($installerExitCode -ne 0) {
+            throw "Android CLI installer failed with exit code $installerExitCode."
         }
     }
     finally {

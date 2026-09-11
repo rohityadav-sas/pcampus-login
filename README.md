@@ -13,15 +13,11 @@ A small native app for signing in to the Pulchowk campus Wi-Fi portal. Enter you
 
 <p align="center"><a href="assets/demo.mp4"><img src="assets/demo.gif" width="280" alt="Campus Wi-Fi connection demo"></a></p>
 
-[Watch the original MP4](assets/demo.mp4). The GIF is a compact preview of the supplied recording.
-
 ## ✨ What it does
 
-- **Automatic login:** reacts to Wi-Fi/network events and a campus `10.100.x.x` address. A brief callback handles events that arrive before the IP. No periodic polling or permanent service.
-- **One tap:** opening the configured app signs in and closes after success. On Android 7.1+, long-press the launcher icon → **Settings** to edit saved values.
-- **Manual Login:** available beside the saved configuration, with a clear error screen, Retry and Back.
-- **Notifications:** “Signing in…” becomes success or failure in the same notification. Sound and floating banners depend on phone settings; quick responses may replace progress before it is visible.
-- **Native UI:** centered form, keyboard-safe layout and no input autofocus.
+- **Automatic-login mode:** reacts to Wi-Fi/network events and a campus `10.100.x.x` address. A brief callback handles events that arrive before the IP. No periodic polling or permanent service.
+- **One-tap mode:** opening the configured app signs in and closes after success. On Android 7.1+, long-press the launcher icon → **Settings** to edit saved values.
+- **Manual Login:** available inside the app.
 
 ## 🪟 Build on Windows
 
