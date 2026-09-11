@@ -23,7 +23,7 @@ android {
     buildToolsVersion = "36.0.0"
 
     defaultConfig {
-        applicationId = "wifi.login.auto"
+        applicationId = "wifi.login.root"
         minSdk = 23
         targetSdk = 36
         versionCode = 3
