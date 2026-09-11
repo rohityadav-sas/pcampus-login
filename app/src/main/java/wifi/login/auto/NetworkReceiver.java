@@ -8,6 +8,7 @@ public class NetworkReceiver extends BroadcastReceiver {
  @Override public void onReceive(Context c,Intent i){
   if(!NetworkEvents.ACTION.equals(i.getAction()))return;
   if(!AutoLogin.prefs(c).getBoolean("enabled",false))return;
+  NetworkEvents.attach(c);
   Network n=i.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK);
   if(!AutoLogin.campus(c,n))n=AutoLogin.campusNetwork(c);
   android.util.Log.i("WifiAutoLogin","Network event: "+i.getAction()+" campusIp="+(n!=null));

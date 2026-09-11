@@ -162,7 +162,7 @@ MIUI may reset some of these permissions after an app update.
 
 ## 📶 How automatic login works
 
-Android delivers Wi-Fi availability events through a system-owned `PendingIntent` network subscription, which can outlive the app process. The app checks whether the phone has a `10.100.x.x` IP address and, if it matches, sends the login request immediately. It does not wait for internet validation or an authentication-required event, and does not poll.
+The app keeps a regular Wi-Fi callback while its process lives and also arms a one-shot PendingIntent subscription for wake-up. Android removes the PendingIntent subscription after delivery; the live callback handles repeated reconnects and re-arms it on disconnection. This is best-effort after process death or freezing, without a permanent service. The app checks whether the phone has a `10.100.x.x` IP address and, if it matches, sends the login request immediately. It does not wait for internet validation or an authentication-required event, and does not poll.
 
 Registration is restored when the app opens, after reboot, and after an update. Disabling automatic login removes it. After manually force-stopping the app, open it again to restore background operation. On Android 13+, allow notification permission to see login progress and results.
 
