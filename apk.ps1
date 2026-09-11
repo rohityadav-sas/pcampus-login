@@ -66,6 +66,43 @@ function Stop-Script {
     exit 1
 }
 
+function Stop-InstallFailure {
+    param([Parameter(Mandatory)][string]$Output)
+
+    if ($Output -match 'INSTALL_FAILED_UPDATE_INCOMPATIBLE|signatures do not match') {
+        Stop-Script 'Installed app uses a different signing key.' @"
+The existing wifi.login.auto app was signed with another key.
+Uninstall the old app, then run this command again:
+
+  adb uninstall wifi.login.auto
+  .\apk.ps1 -Release -Install
+
+Warning: uninstalling removes that app's saved data.
+"@
+    }
+
+    if ($Output -match 'INSTALL_FAILED_VERSION_DOWNGRADE') {
+        Stop-Script 'The installed app has a higher versionCode.' @"
+Increase versionCode for the new build, or uninstall the installed app before retrying.
+Uninstalling removes that app's saved data.
+"@
+    }
+
+    if ($Output -match 'INSTALL_FAILED_INSUFFICIENT_STORAGE') {
+        Stop-Script 'The phone does not have enough free storage.' 'Free some storage on the phone, then retry.'
+    }
+
+    if ($Output -match 'INSTALL_FAILED_USER_RESTRICTED') {
+        Stop-Script 'Android blocked the installation.' 'Unlock the phone and check its USB/install security settings, then retry.'
+    }
+
+    if ($Output -match 'INSTALL_FAILED_OLDER_SDK') {
+        Stop-Script 'This Android version is too old for the APK.' 'Use a supported Android device.'
+    }
+
+    Stop-Script 'APK installation failed.' $Output.Trim()
+}
+
 function ConvertTo-NativeArgument {
     param([AllowEmptyString()][string]$Argument)
 
@@ -385,45 +422,21 @@ if (-not $model) {
 }
 Write-Log "$model [$serial]" 'DEVICE'
 
-$androidCli = Find-AndroidCli
-$installed = $false
+Write-Log "Installing $($apk.Name) with ADB..." 'INSTALL'
 
-if ($androidCli) {
-    Write-Log "Installing $($apk.Name) with fast delta install..." 'INSTALL'
+$adbInstall = Invoke-NativeCaptured -FilePath $adb -Arguments @(
+    '-s', $serial,
+    'install',
+    '-r',
+    $apk.FullName
+)
 
-    $androidArgs = @(
-        '--no-metrics',
-        "--sdk=$SdkPath",
-        'install',
-        "--apks=$($apk.FullName)",
-        "--device=$serial",
-        '--use-delta-install'
-    )
+$adbOutput = @($adbInstall.StdOut, $adbInstall.StdErr) | Where-Object { $_ }
 
-    $androidResult = Invoke-NativeCaptured -FilePath $androidCli -Arguments $androidArgs
-    $androidOutput = @($androidResult.StdOut, $androidResult.StdErr) | Where-Object { $_ }
-    if ($androidResult.ExitCode -eq 0) {
-        $installed = $true
-        Write-Log 'APK installed successfully using Android CLI delta install.' 'OK'
-    }
-    else {
-        Write-Log 'Android CLI delta install failed; falling back to ADB.' 'WARN'
-    }
+if ($adbInstall.ExitCode -ne 0) {
+    $details = $adbOutput -join [Environment]::NewLine
+    Stop-InstallFailure -Output $details
 }
 
-if (-not $installed) {
-    Write-Log "Installing $($apk.Name) with ADB..." 'INSTALL'
-    $adbInstall = Invoke-NativeCaptured -FilePath $adb -Arguments @('-s', $serial, 'install', '-r', $apk.FullName)
-    $adbOutput = @($adbInstall.StdOut, $adbInstall.StdErr) | Where-Object { $_ }
-    if ($adbInstall.ExitCode -ne 0) {
-        $details = if ($androidCli -and $androidOutput) {
-            "Android CLI:`n$($androidOutput -join [Environment]::NewLine)`n`nADB:`n$($adbOutput -join [Environment]::NewLine)"
-        }
-        else {
-            $adbOutput -join [Environment]::NewLine
-        }
-        Stop-Script 'APK installation failed.' $details
-    }
+Write-Log 'APK installed successfully using ADB.' 'OK'
 
-    Write-Log 'APK installed successfully using ADB.' 'OK'
-}

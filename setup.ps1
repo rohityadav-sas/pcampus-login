@@ -512,5 +512,3 @@ Write-Host ''
 Write-Log 'Environment setup complete.' 'OK'
 Write-Host "JAVA_HOME=$JavaHome" -ForegroundColor DarkGray
 Write-Host "ANDROID_HOME=$AndroidSdk" -ForegroundColor DarkGray
-Write-Host ''
-Write-Host 'Next: .\apk.ps1' -ForegroundColor Green
