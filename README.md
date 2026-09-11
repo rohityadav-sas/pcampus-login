@@ -11,9 +11,7 @@ A native Android app for signing in to the Pulchowk campus Wi-Fi portal.
 ## 🎬 Demo
 
 <p align="center">
-  <a href="assets/demo.mp4">
-    <img src="assets/demo.gif" width="280" alt="Campus Wi-Fi login demo">
-  </a>
+  <img src="assets/demo.gif" width="280" alt="Campus Wi-Fi login demo">
 </p>
 
 ## ✨ Modes
@@ -25,7 +23,15 @@ A native Android app for signing in to the Pulchowk campus Wi-Fi portal.
 
 ## 🪟 Build the APK on Windows
 
-This project is designed so a beginner can build it from PowerShell without installing Android Studio.
+This project is designed so a beginner can build it from PowerShell without installing Android Studio. Download and extract the repository ZIP from GitHub's **Code → Download ZIP** menu if Git is not installed; otherwise clone it below.
+
+On a fresh Windows installation, allow the local scripts in the current PowerShell window first:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+This setting ends when you close that window.
 
 ### 1. Clone the Repository
 ```

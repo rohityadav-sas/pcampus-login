@@ -40,7 +40,7 @@ The release signing identity is permanent for this distribution channel. Future 
 5. Increase `versionCode` before publishing an update.
 6. Attach the signed APK and its SHA-256 digest to an intentional GitHub release.
 
-CI debug artifacts are test builds, not stable distribution releases.
+Debug APKs are test builds, not stable distribution releases. This checkout currently has no CI workflow.
 
 The release package is `wifi.login.auto`. Debug builds use `wifi.login.auto.debug`, so debug and release installations remain separate.
 
