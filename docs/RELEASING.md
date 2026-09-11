@@ -48,4 +48,4 @@ Never commit `keystore.properties`, `signing/`, signing passwords, private keys,
 
 ## Published variants
 
-See [DOWNLOADS.md](DOWNLOADS.md) for the four v1.3.0 APKs, source tags, recommendation order and runtime limits. Build each branch with the same private release key. Verify package, version, signature and SHA-256 before uploading.
+See [DOWNLOADS.md](DOWNLOADS.md) for the four v1.3.1 APKs, source tags, recommendation order and runtime limits. Build each branch with the same private release key. Verify package, version, signature and SHA-256 before uploading.
