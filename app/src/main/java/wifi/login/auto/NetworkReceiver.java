@@ -6,12 +6,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class NetworkReceiver extends BroadcastReceiver {
  private static final AtomicBoolean waiting=new AtomicBoolean();
  @Override public void onReceive(Context c,Intent i){
-  if(!NetworkEvents.ACTION.equals(i.getAction()))return;
+  if(!ConnectivityManager.CONNECTIVITY_ACTION.equals(i.getAction())&&!android.net.wifi.WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(i.getAction()))return;
   if(!AutoLogin.prefs(c).getBoolean("enabled",false))return;
-  Network n=i.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK);
-  if(!AutoLogin.campus(c,n))n=AutoLogin.campusNetwork(c);
+  Network n=AutoLogin.campusNetwork(c);
   android.util.Log.i("WifiAutoLogin","Network event: "+i.getAction()+" campusIp="+(n!=null));
-  if(n!=null){final Network network=n;PendingResult p=goAsync();new Thread(()->{try{AutoLogin.login(c,network,false);}finally{p.finish();}},"CampusLogin").start();return;}
+  if(n!=null){PendingResult p=goAsync();new Thread(()->{try{AutoLogin.login(c,n,false);}finally{p.finish();}},"CampusLogin").start();return;}
   NetworkInfo info=i.getParcelableExtra(android.net.wifi.WifiManager.EXTRA_NETWORK_INFO);
   if(info!=null&&(info.getState()==NetworkInfo.State.DISCONNECTED||info.getState()==NetworkInfo.State.DISCONNECTING))return;
   if(!waiting.compareAndSet(false,true))return;
@@ -23,6 +22,6 @@ public class NetworkReceiver extends BroadcastReceiver {
   };
   try{NetworkRequest request=new NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build();if(Build.VERSION.SDK_INT>=26)cm.registerNetworkCallback(request,callback,handler);else cm.registerNetworkCallback(request,callback);}
   catch(RuntimeException e){finished.set(true);waiting.set(false);pending.finish();return;}
-  handler.postDelayed(()->{if(finished.compareAndSet(false,true)){try{cm.unregisterNetworkCallback(callback);}catch(Exception ignored){}waiting.set(false);pending.finish();}},3000);
+  handler.postDelayed(()->{if(finished.compareAndSet(false,true)){try{cm.unregisterNetworkCallback(callback);}catch(Exception ignored){}waiting.set(false);pending.finish();}},8000);
  }
 }

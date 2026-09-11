@@ -1,6 +1,6 @@
 # Release checklist
 
-This repository distributes APKs through GitHub. Version 1.2 targets API 36 and uses system-owned PendingIntent network events. Before publishing, test automatic login after ordinary process death and reboot on Android 7 and Android 15/16, along with notification permission and disabled-auto mode.
+This repository distributes APKs through GitHub, not Google Play. The legacy target SDK is intentional; do not raise it without redesigning and testing background event delivery.
 
 ## First release only
 

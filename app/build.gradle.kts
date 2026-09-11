@@ -25,9 +25,9 @@ android {
     defaultConfig {
         applicationId = "wifi.login.auto"
         minSdk = 23
-        targetSdk = 36
-        versionCode = 3
-        versionName = "1.2.0"
+        targetSdk = 23 // Deliberate legacy broadcast behavior; see README compatibility.
+        versionCode = 2
+        versionName = "1.1.0"
     }
 
     signingConfigs {
@@ -61,5 +61,6 @@ android {
 
     lint {
         abortOnError = true
+        disable += "ExpiredTargetSdkVersion"
     }
 }

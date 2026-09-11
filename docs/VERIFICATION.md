@@ -11,7 +11,7 @@
 - Verified on September 12, 2026: `setup.ps1` succeeds in Windows PowerShell 5.1 with the existing local toolchain; debug assembly, debug lint, and signed release assembly pass. Android SDK `apksigner verify --verbose` confirms the release APK's v1 and v2 signatures.
 - This checkout currently has no GitHub Actions workflow. No current clean-runner build is claimed.
 
-Version 1.2 targets API 36. Certificate verification is deliberately disabled for the fixed campus endpoint; its trust-manager lint suppressions are scoped to that implementation. Remaining lint warnings concern English programmatic text and attributes ignored on older devices.
+Warnings intentionally remain for trust-on-first-use certificate pinning, English-only programmatic text, and the deliberate target API 23 compatibility strategy. Only the obsolete-target lint rule is disabled.
 
 ## Current build workflow
 
@@ -30,10 +30,8 @@ For the first signed release only:
 
 ## Limits
 
-The owner reports successfully verifying setup in Oracle VirtualBox. Agent-side setup checks reused installed tools. Earlier CI attempts used the previous SDK installer and cannot validate the current Android CLI setup.
+A completely empty Windows VM has not been used to exercise every download/install branch end-to-end. The local setup check reused installed tools, so it does not prove the fresh-download branches. Earlier CI attempts used the previous SDK installer and cannot validate the current Android CLI setup.
 
 A live campus login requires campus Wi-Fi and valid credentials and is not performed by CI.
 
-Version 1.2 debug assembly, debug lint and signed release assembly pass. The connected Android 11 phone rejected debug APK installation with INSTALL_FAILED_USER_RESTRICTED, so no live result is claimed for the new event path. Android 7 and Android 15/16 runtime tests remain pending.
-
-Device acceptance checks: enable automatic login and allow notifications; connect to campus Wi-Fi without waiting for Android validation; confirm progress then success replaces the same notification. Repeat after ordinary process termination, reboot and package upgrade. Disable automatic login and confirm no automatic request occurs. Check unrelated Wi-Fi, denied notifications, manual login, retries and system-bar/keyboard insets. Use ordinary process termination for the wake-up test, not Force stop, which intentionally blocks background execution until the next app launch.
+Real-device behavior has primarily been verified on Android 11 / MIUI. Android 15+ normal installation and Google Play are outside this build's current scope because the app deliberately targets API 23 for legacy connectivity-broadcast behavior.
