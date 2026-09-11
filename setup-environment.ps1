@@ -223,7 +223,10 @@ if (-not $JavaHome) {
     finally {
         if (Test-Path $javaTemp) {
             Write-Log "Removing temporary Java download files..." "INFO"
-            Remove-Item -LiteralPath $javaTemp -Recurse -Force
+            $cleanupPath = [IO.Path]::GetFullPath($javaTemp)
+            $cleanupRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+            if (-not $cleanupPath.StartsWith($cleanupRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Unsafe temporary cleanup path.' }
+            Remove-Item -LiteralPath $cleanupPath -Recurse -Force
         }
     }
 }
@@ -262,7 +265,10 @@ if (-not (Test-Path $SdkManager)) {
     finally {
         if (Test-Path $androidTemp) {
             Write-Log "Removing temporary Android download files..." "INFO"
-            Remove-Item -LiteralPath $androidTemp -Recurse -Force
+            $cleanupPath = [IO.Path]::GetFullPath($androidTemp)
+            $cleanupRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+            if (-not $cleanupPath.StartsWith($cleanupRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Unsafe temporary cleanup path.' }
+            Remove-Item -LiteralPath $cleanupPath -Recurse -Force
         }
     }
 
@@ -287,32 +293,41 @@ Add-ToUserPath @(
 )
 Write-Log "ANDROID_HOME=$AndroidSdk" "OK"
 
-Write-Log "Installing Android Platform Tools, API 36, and Build Tools 36.0.0..." "INSTALL"
-$installCommand = '@echo off & call "{0}" --sdk_root="{1}" "platform-tools" "platforms;android-36" "build-tools;36.0.0" 2>&1' -f $SdkManager, $AndroidSdk
-1..100 |
-    ForEach-Object { "y" } |
-    & $env:ComSpec /d /c $installCommand
-if ($LASTEXITCODE -ne 0) {
-    throw "Android SDK package installation failed with exit code $LASTEXITCODE."
+function Invoke-SdkSetup {
+    param([string]$Arguments, [string]$Answer = 'y')
+    $info = [Diagnostics.ProcessStartInfo]::new()
+    $info.FileName = $env:ComSpec
+    $info.Arguments = '/d /s /c ""' + $SdkManager + '" --sdk_root="' + $AndroidSdk + '" ' + $Arguments + '"'
+    $info.UseShellExecute = $false
+    $info.CreateNoWindow = $true
+    $info.RedirectStandardInput = $true
+    $info.RedirectStandardOutput = $true
+    $info.RedirectStandardError = $true
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = $info
+    try {
+        $null = $process.Start()
+        $outputTask = $process.StandardOutput.ReadToEndAsync()
+        $errorTask = $process.StandardError.ReadToEndAsync()
+        $deadline = [DateTime]::UtcNow.AddMinutes(20)
+        while (-not $process.WaitForExit(300)) {
+            if ([DateTime]::UtcNow -gt $deadline) { $process.Kill(); throw 'SDK manager timed out.' }
+            # sdkmanager can replace its buffered reader between prompts. Do not send all answers at once.
+            try { $process.StandardInput.WriteLine($Answer); $process.StandardInput.Flush() } catch [IO.IOException] { }
+        }
+        $output = $outputTask.GetAwaiter().GetResult()
+        $errors = $errorTask.GetAwaiter().GetResult()
+        if ($errors) { Write-Host $errors }
+        if ($process.ExitCode -ne 0) { throw "SDK manager failed: $($process.ExitCode)" }
+        return $output
+    } finally { $process.Dispose() }
 }
-Write-Log "Required Android SDK packages are installed." "OK"
-
-Write-Log "Checking Android SDK licenses..." "CHECK"
-Write-Log "Accepting all Android SDK licenses automatically..." "CONFIG"
-$licenseCommand = '@echo off & call "{0}" --sdk_root="{1}" --licenses 2>&1' -f $SdkManager, $AndroidSdk
-1..100 |
-    ForEach-Object { "y" } |
-    & $env:ComSpec /d /c $licenseCommand |
-    Tee-Object -Variable licenseOutputLines
-if ($LASTEXITCODE -ne 0) {
-    throw "Android SDK license setup failed with exit code $LASTEXITCODE."
-}
-
-# Verify after acceptance; initial prompts can describe the previous unaccepted state.
-$verification = "n" | & $env:ComSpec /d /c $licenseCommand
-if ($LASTEXITCODE -ne 0 -or ($verification -join "`n") -notmatch 'All SDK package licenses accepted') {
-    throw 'SDK licenses could not be verified. Run setup again.'
-}
+Write-Log 'Accepting Android SDK licenses...' 'CONFIG'
+Invoke-SdkSetup '--licenses' | Write-Host
+$verification = Invoke-SdkSetup '--licenses' 'n'
+if ($verification -notmatch 'All SDK package licenses accepted') { throw 'SDK licenses could not be verified.' }
+Write-Log 'Installing Platform Tools, API 36 and Build Tools 36.0.0...' 'INSTALL'
+Invoke-SdkSetup '"platform-tools" "platforms;android-36" "build-tools;36.0.0"' | Write-Host
 foreach ($required in @('platform-tools\adb.exe','platforms\android-36\android.jar','build-tools\36.0.0\aapt2.exe')) {
     if (-not (Test-Path (Join-Path $AndroidSdk $required))) { throw "SDK package missing: $required" }
 }
