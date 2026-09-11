@@ -2,13 +2,46 @@
 
 This repository distributes APKs through GitHub, not Google Play. The legacy target SDK is intentional; do not raise it without redesigning and testing background event delivery.
 
-1. Run `./apk.ps1` and device tests with the separate debug package.
-2. Copy `keystore.properties.example` to `keystore.properties` and supply your existing signing identity. Both the properties and signing files are ignored.
-3. For a first distribution only, create a key with `keytool -genkeypair -keystore signing/release.jks -alias release -keyalg RSA -keysize 3072 -validity 10000`. Create the `signing` directory first. Let keytool prompt for passwords; never put them in a command, workflow input, or source file.
-4. Back up the key and passwords securely. Every update must use the same key and a greater versionCode.
-5. Run `./apk.ps1 -Release`. Verify the APK with the SDK's `apksigner verify --verbose` and test it before publishing.
-6. Attach the signed APK and its SHA-256 digest to an intentional GitHub release. CI debug artifacts are for testing, not stable distribution.
+## First release only
 
-The release package is `wifi.login.auto`, preserving the finished local app's identity. The original repository app used `wifi.login` and is a separate installation. A debug APK uses `wifi.login.auto.debug` and never replaces either app. Existing phone credentials are not copied into debug builds.
+1. Run `.\setup.ps1` to prepare Java and the Android SDK.
+2. Run `.\setup-keys.ps1`.
+   - It creates `signing/release.p12`.
+   - The keystore type is PKCS12.
+   - It uses an RSA 3072-bit key.
+   - It creates `keystore.properties` automatically.
+   - Use a strong password and store it securely.
+3. Back up `signing/release.p12` and its password somewhere separate from the repository.
 
-Never commit signing keys, credentials, prebuilt APKs, or device preferences. Old repository history and previously published artifacts are not rewritten or deleted by this replacement.
+The release signing identity is permanent for this distribution channel. Future APK updates must be signed with the same key.
+
+## Every release
+
+1. Build and test the separate debug package with:
+
+   ```powershell
+   .\apk.ps1 -Debug
+   .\apk.ps1 -Debug -Install
+   ```
+
+2. Build the signed release APK:
+
+   ```powershell
+   .\apk.ps1 -Release
+   ```
+
+3. Install/test it if needed:
+
+   ```powershell
+   .\apk.ps1 -Release -Install
+   ```
+
+4. Verify the release APK with the Android SDK's `apksigner verify --verbose`.
+5. Increase `versionCode` before publishing an update.
+6. Attach the signed APK and its SHA-256 digest to an intentional GitHub release.
+
+CI debug artifacts are test builds, not stable distribution releases.
+
+The release package is `wifi.login.auto`. Debug builds use `wifi.login.auto.debug`, so debug and release installations remain separate.
+
+Never commit `keystore.properties`, `signing/`, signing passwords, private keys, prebuilt APKs, or device preferences.
