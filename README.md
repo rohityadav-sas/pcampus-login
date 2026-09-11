@@ -8,16 +8,13 @@
 
 A native Android app for signing in to the Pulchowk campus Wi-Fi portal.
 
-## Branches
+## Download the app
 
-| Branch | Implementation |
-| --- | --- |
-| `main` | Earlier API 23 connectivity broadcasts, certificate verification disabled, and newer icon/build tooling. |
-| `android-15` | API 36 PendingIntent experiment. Known issue: subscription disappears after first delivery. |
-| `permanent-notification` | API 36 foreground-service listener with a permanent notification; separate Campus Wi-Fi FG app. |
-| `root` | Separate Campus Wi-Fi Root app using a privileged event listener, without a permanent notification. |
+[Download v1.3.0 - four signed APKs](https://github.com/rohityadav-sas/pcampus-login/releases/tag/v1.3.0)
 
-FG and Root reconnects were tested on Android 11. Android 15/16 runtime testing remains pending. All four branches disable certificate verification. Main restores the earlier version code too, so its APK is not an in-place upgrade over the API 36 build.
+Try **Root** first if your phone is rooted; otherwise start with **Permanent Notification**. Next try **Legacy (Android 6-14)**, or **Modern** if you need a newer target without a permanent notification. Modern remains best-effort when Android kills/freezes its process.
+
+See [the APK comparison and setup guide](docs/DOWNLOADS.md) for package names, requirements, tested behavior, updates and source tags. This order is a recommendation, not a measured reliability ranking.
 
 ## 🎬 Demo
 
