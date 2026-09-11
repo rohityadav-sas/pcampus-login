@@ -154,7 +154,9 @@ MIUI may reset some of these permissions after an app update.
 
 ## 📶 How automatic login works
 
-The app checks whether the phone has `10.100.x.x` IP address and if it matches, the app sends the login request.
+Android delivers Wi-Fi availability events through a system-owned `PendingIntent` network subscription, which can outlive the app process. The app checks whether the phone has a `10.100.x.x` IP address and, if it matches, sends the login request immediately. It does not wait for internet validation or an authentication-required event, and does not poll.
+
+Registration is restored when the app opens, after reboot, and after an update. Disabling automatic login removes it. After manually force-stopping the app, open it again to restore background operation. On Android 13+, allow notification permission to see login progress and results.
 
 Login can sometimes be delayed by:
 
@@ -166,15 +168,9 @@ Login can sometimes be delayed by:
 
 ## ⚠️ Android compatibility
 
-The app currently targets Android API 23 on purpose.
+Version 1.2 targets API 36 (Android 16) and retains minimum API 23 (Android 6), including Android 7. It no longer relies on the old manifest connectivity broadcast or requires an outdated-target installation bypass on Android 15/16.
 
-This is kept for the older connectivity-broadcast behavior used by the automatic-login feature.
-
-The main supported range is Android 6 through Android 14.
-
-The app has mainly been tested on Android 11 / MIUI, so behavior may differ on other phones.
-
-Android 15 and newer normally block installation of apps that target below API 24. Supporting newer Android versions properly may require changes to the automatic-login system, not only changing the target SDK number.
+The new background registration uses an API available since Android 6. Builds and lint pass, but live Android 7 and Android 15/16 login tests are still pending. Manufacturer background restrictions can still affect event delivery.
 
 ## 🔐 Privacy and security
 
@@ -184,6 +180,8 @@ They are stored inside the app's private data area. Android backup is disabled.
 
 The app does not include analytics or send your credentials to another service.
 
+HTTPS encryption is retained, but certificate verification and first-use pin enrollment are disabled for the fixed campus endpoint. The app therefore does not authenticate the portal's identity.
+
 
 ## 🧪 Contributing
 
@@ -192,5 +190,5 @@ For contribution information, see [CONTRIBUTING.md](CONTRIBUTING.md).
 ### Platform references
 
 - [Android 15 minimum target requirement](https://developer.android.com/about/versions/15/behavior-changes-all#minimum-target-api-level)
-- [Android 7 connectivity broadcast changes](https://developer.android.com/about/versions/nougat/android-7.0-changes#bg-opt)
+- [PendingIntent network callbacks](https://developer.android.com/reference/android/net/ConnectivityManager#registerNetworkCallback(android.net.NetworkRequest,%20android.app.PendingIntent))
 - [Android Gradle Plugin 8.13 compatibility](https://developer.android.com/build/releases/agp-8-13-0-release-notes)
