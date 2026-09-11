@@ -17,21 +17,19 @@ A small native app for signing in to the Pulchowk campus Wi-Fi portal. Enter you
 
 ## ✨ What it does
 
-- **Automatic login:** reacts to Wi-Fi/network events and a campus `10.100.x.x` address. A brief callback handles events that arrive before the IP. No periodic polling or permanent service.
-- **One tap:** opening the configured app signs in and closes after success. On Android 7.1+, long-press the launcher icon → **Settings** to edit saved values.
-- **Manual Login:** available beside the saved configuration, with a clear error screen, Retry and Back.
-- **Notifications:** “Signing in…” becomes success or failure in the same notification. Sound and floating banners depend on phone settings; quick responses may replace progress before it is visible.
-- **Native UI:** centered form, keyboard-safe layout and no input autofocus.
+- **Automatic-login mode:** reacts to Wi-Fi/network events and a campus `10.100.x.x` address. A brief callback handles events that arrive before the IP. No periodic polling or permanent service.
+- **One-tap mode:** opening the app signs in and closes after success. On Android 7.1+, long-press the launcher icon → **Settings** to edit saved values.
+- **Manual Login:** available inside the app.
 
 ## 🪟 Build on Windows
 
-Use Windows 10/11 x64 with internet access. After cloning this repository—or downloading and extracting its ZIP—open PowerShell in the project folder:
+Use Windows with internet access.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\apk.ps1
 ```
 
-This single command checks the toolchain, installs missing tools into your user profile, verifies SDK licenses, runs lint and builds a debug APK. It does not require administrator access, a connected phone or a private signing key. The first run downloads the SDK, JDK if needed, Gradle and build dependencies; later runs reuse them.
+This single command checks the toolchain, installs missing tools into your user profile, verifies SDK licenses, runs lint and builds a debug APK. The first run downloads the SDK, JDK if needed, Gradle and build dependencies; later runs reuse them.
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
@@ -46,26 +44,21 @@ Other commands:
 .\apk.ps1 -Release            # Requires your private signing configuration
 ```
 
-The setup script reuses a complete compatible JDK (17–24) or downloads Oracle JDK 21 with checksum verification. It installs the Android SDK **only** in `%LOCALAPPDATA%\Android\Sdk`, reports download progress and accepts SDK licenses automatically. Running it signifies acceptance of those SDK licenses and the downloaded JDK's terms. It uses the bundled Gradle wrapper; no global Gradle installation is needed.
+The setup script reuses a complete compatible JDK (17–24) or downloads Oracle JDK 21 with checksum verification. It installs the Android SDK **only** in `%LOCALAPPDATA%\Android\Sdk`, reports download progress and accepts SDK licenses automatically.
 
 ## 📱 Compatibility and setup
 
-**This is a GitHub sideload build, not a Google Play release.** It retains target API 23 to preserve the tested legacy connectivity broadcasts. The supported source baseline is Android 6–14; real-device testing has been on Android 11 / MIUI. Other OEM behavior is not verified. Android 15+ blocks normal installation of apps targeting below API 24. Raising the target alone would change automatic-login delivery; modern Android support needs a separate implementation and testing.
+**This is a GitHub sideload build, not a Google Play release.** It retains target API 23 to preserve the tested legacy connectivity broadcasts. The supported source baseline is Android 6–14; real-device testing has been on Android 11 / MIUI. Other OEM behavior is not verified. Android 15+ blocks normal installation of apps targeting below API 24. Modern Android support needs a separate implementation and testing.
 
 1. Install the APK and open it once.
 2. Enter your campus username/password and enable **Automatic login**, or leave it off for one-tap mode.
-3. Save. On MIUI, allow **Autostart**, notifications, sound and floating notifications in system settings. MIUI may reset Autostart after an update.
-4. Connect to campus Wi-Fi. The app identifies the network by its IP range, not its SSID, and does not wait for “Authentication required.”
+3. Save. On MIUI, allow **Autostart**, notifications, sound and floating notifications in system settings. MIUI may reset Autostart after an update or reinstall.
 
-No campus IP means no request. “No Internet” does not suppress login. DHCP, weak signal, Android broadcast delivery and portal timeouts can delay it. The app avoids duplicate attempts; it does not continuously refresh an expired portal session while you remain connected.
-
-The debug package is separate (`wifi.login.auto.debug`). Stable release builds use `wifi.login.auto`; the original repository's `wifi.login` app is a different package.
+The debug package is separate (`wifi.login.auto.debug`). Stable release builds use `wifi.login.auto`.
 
 ## 🔐 Privacy and release signing
 
-Credentials are entered on-device, stored in private app preferences with Android backup disabled, and sent only to the fixed campus portal over HTTPS. They are **not encrypted separately from app-private storage**. Root or a compromised device can read them. There is no analytics or credential-injection build workflow.
-
-The campus uses a private certificate. The app remembers the certificate fingerprint on first use and checks it subsequently. First-use enrollment must happen on a trusted campus network; it is not independent proof of campus identity.
+Credentials are entered on-device, stored in private app preferences with Android backup disabled, and sent only to the fixed campus portal over HTTPS.
 
 See [release signing and publishing](docs/RELEASING.md). Debug CI artifacts are test builds. Keep release keys private and preserve the same signing identity for updates.
 
