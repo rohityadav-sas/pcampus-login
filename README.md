@@ -7,7 +7,7 @@
   <a href="https://github.com/rohityadav-sas/pcampus-login/actions/workflows/build-apk.yml"><img src="https://github.com/rohityadav-sas/pcampus-login/actions/workflows/build-apk.yml/badge.svg" alt="Android build"></a>
 </p>
 
-A small native app for signing in to the Pulchowk campus Wi-Fi portal. Enter your credentials on your phone, choose automatic or one-tap login, and save. No Android Studio, web build service, root or Magisk module is required.
+A small native app for signing in to the Pulchowk campus Wi-Fi portal.
 
 ## 🎬 Demo
 
