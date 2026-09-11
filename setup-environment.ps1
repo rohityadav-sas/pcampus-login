@@ -296,11 +296,12 @@ Write-Log "ANDROID_HOME=$AndroidSdk" "OK"
 function Invoke-SdkSetup {
     param([string]$Arguments, [string]$Answer = 'y')
     $info = [Diagnostics.ProcessStartInfo]::new()
-    $info.FileName = $env:ComSpec
-    $info.Arguments = '/d /s /c ""' + $SdkManager + '" --sdk_root="' + $AndroidSdk + '" ' + $Arguments + '"'
+    $info.FileName = Join-Path $JavaHome 'bin\java.exe'
+    $info.Arguments = '-Dfile.encoding=UTF-8 -classpath "' + (Join-Path $CommandLineTools 'lib\sdkmanager-classpath.jar') + '" com.android.sdklib.tool.sdkmanager.SdkManagerCli --sdk_root="' + $AndroidSdk + '" ' + $Arguments
     $info.UseShellExecute = $false
     $info.CreateNoWindow = $true
     $info.RedirectStandardInput = $true
+    $info.StandardInputEncoding = [Text.UTF8Encoding]::new($false)
     $info.RedirectStandardOutput = $true
     $info.RedirectStandardError = $true
     $process = [Diagnostics.Process]::new()
@@ -313,7 +314,7 @@ function Invoke-SdkSetup {
         while (-not $process.WaitForExit(300)) {
             if ([DateTime]::UtcNow -gt $deadline) { $process.Kill(); throw 'SDK manager timed out.' }
             # sdkmanager can replace its buffered reader between prompts. Do not send all answers at once.
-            try { $process.StandardInput.WriteLine($Answer); $process.StandardInput.Flush() } catch [IO.IOException] { }
+            try { $process.StandardInput.Write($Answer + "`n"); $process.StandardInput.Flush() } catch [IO.IOException] { }
         }
         $output = $outputTask.GetAwaiter().GetResult()
         $errors = $errorTask.GetAwaiter().GetResult()
