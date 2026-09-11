@@ -180,18 +180,6 @@ Login can sometimes be delayed by:
 - phone manufacturer power-saving features
 - a slow campus portal response
 
-## ⚠️ Android compatibility
-
-The app currently targets Android API 23 on purpose.
-
-This is kept for the older connectivity-broadcast behavior used by the automatic-login feature.
-
-The main supported range is Android 6 through Android 14.
-
-The app has mainly been tested on Android 11 / MIUI, so behavior may differ on other phones.
-
-Android 15 and newer normally block installation of apps that target below API 24. Supporting newer Android versions properly may require changes to the automatic-login system, not only changing the target SDK number.
-
 ## 🔐 Privacy and security
 
 Your campus username and password are entered and stored on your phone.
