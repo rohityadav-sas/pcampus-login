@@ -127,6 +127,14 @@ Release:
 | `.\apk.ps1 -Install` | Builds Debug and installs it on a connected phone |
 | `.\apk.ps1 -Release -Install` | Builds Release and installs it on a connected phone |
 
+## 🎨 Change the app icon
+
+Replace `assets/icon/icon.svg`, then build with `./apk.ps1 -Release` (or `./apk.ps1` for debug). The build automatically regenerates the launcher resources. No Android Studio or image tools are needed.
+
+Use a simple SVG containing paths with a `viewBox="0 0 width height"`. Fill/stroke colors (`#RGB`, `#RRGGBB`, `none`), stroke width, caps and joins are supported. Convert text/shapes to paths and flatten groups, transforms and styles before saving. Separate SVG arc flags with spaces, as in the supplied icon. Unsupported elements/attributes stop generation with an explanation.
+
+To generate resources manually before using Gradle directly, run `./update-icon.ps1`. To change the white background, edit the default `$Background` in that script. Generated resources include the older Android icon, adaptive icon and Android 13+ themed icon. Install the rebuilt APK to see the change; some launchers cache icons until restarted.
+
 ## 📱 Using the app
 
 1. Install the APK and open the app.

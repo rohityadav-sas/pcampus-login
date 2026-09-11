@@ -1,0 +1,77 @@
+[CmdletBinding()]
+param(
+    [string]$Source = '',
+    [string]$Background = '#FFFFFF'
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+if (-not $Source) { $Source = Join-Path $PSScriptRoot 'assets\icon\icon.svg' }
+$culture = [Globalization.CultureInfo]::InvariantCulture
+
+function Color([string]$value) {
+    if ($value -eq 'none') { return '#00000000' }
+    if ($value -match '^#[0-9a-fA-F]{3}$') {
+        return '#' + $value[1] + $value[1] + $value[2] + $value[2] + $value[3] + $value[3]
+    }
+    if ($value -match '^#[0-9a-fA-F]{6}$') { return $value }
+    throw "Use SVG colors as #RGB, #RRGGBB or none; received '$value'."
+}
+function Escape([string]$value) { return [Security.SecurityElement]::Escape($value) }
+
+# Reject unsupported SVG features instead of silently producing a different icon.
+$settings = [Xml.XmlReaderSettings]::new()
+$settings.DtdProcessing = [Xml.DtdProcessing]::Prohibit
+$settings.XmlResolver = $null
+$reader = [Xml.XmlReader]::Create((Resolve-Path -LiteralPath $Source).Path, $settings)
+try {
+    $svg = [Xml.XmlDocument]::new()
+    $svg.Load($reader)
+} finally { $reader.Dispose() }
+$root = $svg.DocumentElement
+if ($root.LocalName -ne 'svg') { throw 'The source must be an SVG.' }
+$viewBox = $root.GetAttribute('viewBox').Trim() -split '[,\s]+'
+if ($viewBox.Count -ne 4) { throw 'Provide viewBox="0 0 width height".' }
+$numbers = @($viewBox | ForEach-Object { [double]::Parse($_, $culture) })
+if ($numbers[0] -ne 0 -or $numbers[1] -ne 0 -or $numbers[2] -le 0 -or $numbers[3] -le 0) {
+    throw 'Use a positive viewBox starting at 0 0.'
+}
+$allowed = @('xmlns','viewBox','width','height','fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','d')
+foreach ($element in $svg.SelectNodes('//*')) {
+    if ($element.LocalName -notin @('svg','path')) { throw 'Only path-based SVGs are supported. Convert shapes/text to paths and flatten groups first.' }
+    foreach ($attribute in $element.Attributes) {
+        if ($attribute.Name -notin $allowed) { throw "Unsupported SVG attribute '$($attribute.Name)'. Flatten styles and transforms first." }
+    }
+}
+$paths = @($root.SelectNodes('*'))
+if ($paths.Count -eq 0) { throw 'The SVG needs at least one path.' }
+$body = ''
+foreach ($path in $paths) {
+    $values = @{}
+    foreach ($pair in @(@('fill','#000000'),@('stroke','none'),@('stroke-width','1'),@('stroke-linecap','butt'),@('stroke-linejoin','miter'))) {
+        $name = $pair[0]
+        $values[$name] = if ($path.HasAttribute($name)) { $path.GetAttribute($name) } elseif ($root.HasAttribute($name)) { $root.GetAttribute($name) } else { $pair[1] }
+    }
+    if (-not $path.GetAttribute('d')) { throw 'Each path needs path data (d).' }
+    $body += '<path android:pathData="' + (Escape $path.GetAttribute('d')) + '" android:fillColor="' + (Color $values['fill']) + '" android:strokeColor="' + (Color $values['stroke']) + '" android:strokeWidth="' + (Escape $values['stroke-width']) + '" android:strokeLineCap="' + (Escape $values['stroke-linecap']) + '" android:strokeLineJoin="' + (Escape $values['stroke-linejoin']) + '" />' + "`n"
+}
+$scale = 44.0 / [Math]::Max($numbers[2], $numbers[3])
+$x = (108 - $numbers[2] * $scale) / 2
+$y = (108 - $numbers[3] * $scale) / 2
+$group = '<group android:scaleX="' + $scale.ToString($culture) + '" android:scaleY="' + $scale.ToString($culture) + '" android:translateX="' + $x.ToString($culture) + '" android:translateY="' + $y.ToString($culture) + '">' + "`n" + $body + '</group>'
+$header = '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">'
+$backgroundPath = '<path android:fillColor="' + (Color $Background) + '" android:pathData="M0,0h108v108h-108z" />'
+$res = Join-Path $PSScriptRoot 'app\src\main\res'
+$files = @{
+    'drawable\ic_launcher_foreground.xml' = $header + $group + '</vector>'
+    'drawable\ic_launcher_background.xml' = $header + $backgroundPath + '</vector>'
+    'mipmap-anydpi\ic_launcher.xml' = $header + $backgroundPath + $group + '</vector>'
+    'mipmap-anydpi-v26\ic_launcher.xml' = '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"><background android:drawable="@drawable/ic_launcher_background"/><foreground android:drawable="@drawable/ic_launcher_foreground"/></adaptive-icon>'
+    'mipmap-anydpi-v33\ic_launcher.xml' = '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"><background android:drawable="@drawable/ic_launcher_background"/><foreground android:drawable="@drawable/ic_launcher_foreground"/><monochrome android:drawable="@drawable/ic_launcher_foreground"/></adaptive-icon>'
+}
+foreach ($entry in $files.GetEnumerator()) {
+    $destination = Join-Path $res $entry.Key
+    New-Item -ItemType Directory -Force (Split-Path $destination) | Out-Null
+    [IO.File]::WriteAllText($destination, $entry.Value + "`n", [Text.UTF8Encoding]::new($false))
+}
+Write-Host '[OK] Launcher icons updated from SVG.'

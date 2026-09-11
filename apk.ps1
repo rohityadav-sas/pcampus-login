@@ -317,6 +317,7 @@ if ($Release) {
 }
 
 Write-Log "Building $Variant APK..." 'BUILD'
+& (Join-Path $PSScriptRoot 'update-icon.ps1')
 $timer = [Diagnostics.Stopwatch]::StartNew()
 
 Push-Location -LiteralPath $PSScriptRoot
@@ -439,4 +440,3 @@ if ($adbInstall.ExitCode -ne 0) {
 }
 
 Write-Log 'APK installed successfully using ADB.' 'OK'
-
