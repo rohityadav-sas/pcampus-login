@@ -315,19 +315,18 @@ function Install-AndroidCli {
 
         Write-Log 'Installing Android CLI for the current user...' 'INSTALL'
 
-        # Capture installer stdout so it is not emitted as part of this function's
-        # return value. Then print it explicitly for the user. Otherwise PowerShell
-        # would combine the installer text with the final android.exe path.
+        # Capture stdout so installer chatter does not become part of this
+        # function's return value. Keep successful setup concise; print the
+        # captured output only when installation fails.
         $installerOutput = & $env:ComSpec /d /c "`"$installer`""
         $installerExitCode = $LASTEXITCODE
 
-        foreach ($line in @($installerOutput)) {
-            if ($null -ne $line -and "$line".Length -gt 0) {
-                Write-Host $line
-            }
-        }
-
         if ($installerExitCode -ne 0) {
+            foreach ($line in @($installerOutput)) {
+                if ($null -ne $line -and "$line".Length -gt 0) {
+                    Write-Host $line
+                }
+            }
             throw "Android CLI installer failed with exit code $installerExitCode."
         }
     }
@@ -417,8 +416,11 @@ if (Test-Path Env:ANDROID_SDK_ROOT) {
 }
 
 $legacyMachineSdkRoot = [Environment]::GetEnvironmentVariable('ANDROID_SDK_ROOT', 'Machine')
-if ($legacyMachineSdkRoot) {
-    Write-Log "A machine-level ANDROID_SDK_ROOT still exists ($legacyMachineSdkRoot). It is deprecated; remove it from Windows Environment Variables if it conflicts with ANDROID_HOME." 'WARN'
+if (
+    $legacyMachineSdkRoot -and
+    (Normalize-PathEntry $legacyMachineSdkRoot) -ine (Normalize-PathEntry $AndroidSdk)
+) {
+    Write-Log "Machine ANDROID_SDK_ROOT points somewhere else ($legacyMachineSdkRoot). ANDROID_HOME is using $AndroidSdk." 'WARN'
 }
 
 Write-Log 'Checking Android CLI...' 'CHECK'
@@ -435,22 +437,53 @@ $platformTools = Join-Path $AndroidSdk 'platform-tools\adb.exe'
 $platformJar = Join-Path $AndroidSdk "platforms\android-$CompileSdk\android.jar"
 $buildTools = Join-Path $AndroidSdk "build-tools\$BuildToolsVersion\aapt2.exe"
 
-$missingPackages = @()
-if (-not (Test-Path -LiteralPath $platformTools)) {
-    $missingPackages += 'platform-tools'
-}
-if (-not (Test-Path -LiteralPath $platformJar)) {
-    $missingPackages += "platforms/android-$CompileSdk"
-}
-if (-not (Test-Path -LiteralPath $buildTools)) {
-    $missingPackages += "build-tools/$BuildToolsVersion"
+function Get-MissingSdkPackages {
+    $missing = @()
+
+    if (-not (Test-Path -LiteralPath $platformTools -PathType Leaf)) {
+        $missing += 'platform-tools'
+    }
+    if (-not (Test-Path -LiteralPath $platformJar -PathType Leaf)) {
+        $missing += "platforms/android-$CompileSdk"
+    }
+    if (-not (Test-Path -LiteralPath $buildTools -PathType Leaf)) {
+        $missing += "build-tools/$BuildToolsVersion"
+    }
+
+    return $missing
 }
 
+$missingPackages = @(Get-MissingSdkPackages)
+
 if ($missingPackages.Count -gt 0) {
-    Write-Log "Installing missing Android SDK packages: $($missingPackages -join ', ')" 'INSTALL'
-    & $AndroidCli "--sdk=$AndroidSdk" sdk install @missingPackages
-    if ($LASTEXITCODE -ne 0) {
-        throw "Android SDK package installation failed with exit code $LASTEXITCODE."
+    for ($attempt = 1; $attempt -le 2; $attempt++) {
+        Write-Log "Installing missing Android SDK packages: $($missingPackages -join ', ')" 'INSTALL'
+
+        # Android CLI is still young and can occasionally exit abnormally on
+        # Windows after all packages have already been written. Disable metrics,
+        # then trust the filesystem verification below over the process exit code.
+        & $AndroidCli '--no-metrics' "--sdk=$AndroidSdk" sdk install @missingPackages
+        $sdkInstallExitCode = $LASTEXITCODE
+        $missingAfterInstall = @(Get-MissingSdkPackages)
+
+        if ($missingAfterInstall.Count -eq 0) {
+            if ($sdkInstallExitCode -ne 0) {
+                Write-Log "Android CLI exited with code $sdkInstallExitCode after installation, but all required SDK files were verified. Continuing." 'WARN'
+            }
+            else {
+                Write-Log 'Android SDK packages installed and verified.' 'OK'
+            }
+            break
+        }
+
+        if ($attempt -lt 2) {
+            Write-Log "SDK installation was incomplete; retrying once for: $($missingAfterInstall -join ', ')" 'WARN'
+            $missingPackages = $missingAfterInstall
+            Start-Sleep -Seconds 1
+            continue
+        }
+
+        throw "Android SDK installation failed. Still missing: $($missingAfterInstall -join ', ')"
     }
 }
 else {
@@ -463,7 +496,7 @@ $requiredFiles = @(
     $buildTools
 )
 foreach ($requiredFile in $requiredFiles) {
-    if (-not (Test-Path -LiteralPath $requiredFile)) {
+    if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {
         throw "Required Android SDK component is still missing: $requiredFile"
     }
 }
@@ -477,12 +510,7 @@ Refresh-ProcessPath
 
 Write-Host ''
 Write-Log 'Environment setup complete.' 'OK'
-Write-Host "JAVA_HOME=$JavaHome"
-Write-Host "ANDROID_HOME=$AndroidSdk"
-Write-Host "Android CLI=$AndroidCli"
+Write-Host "JAVA_HOME=$JavaHome" -ForegroundColor DarkGray
+Write-Host "ANDROID_HOME=$AndroidSdk" -ForegroundColor DarkGray
 Write-Host ''
-Write-Host 'Build commands:'
-Write-Host '  .\apk.ps1 -Debug'
-Write-Host '  .\apk.ps1 -Debug -Install'
-Write-Host '  .\apk.ps1 -Release'
-Write-Host '  .\apk.ps1 -Release -Install'
+Write-Host 'Next: .\apk.ps1' -ForegroundColor Green

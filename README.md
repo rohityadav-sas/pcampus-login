@@ -1,106 +1,187 @@
-<img src="assets/header.svg" width="100%" alt="Campus Wi-Fi animated wave banner">
+<img src="assets/header.svg" width="100%" alt="Campus Wi-Fi banner">
 
 <p align="center">
   <img src="https://img.shields.io/badge/Android-native-3DDC84?logo=android&amp;logoColor=white" alt="Native Android">
   <img src="https://img.shields.io/badge/Java-17-167568" alt="Java 17">
-  <img src="https://img.shields.io/badge/Build-Windows%20terminal-0078D4" alt="Windows terminal build">
-  <a href="https://github.com/rohityadav-sas/pcampus-login/actions/workflows/build-apk.yml"><img src="https://github.com/rohityadav-sas/pcampus-login/actions/workflows/build-apk.yml/badge.svg" alt="Android build"></a>
+  <img src="https://img.shields.io/badge/Build-Windows%20PowerShell-0078D4" alt="Windows PowerShell build">
 </p>
 
-A small native app for signing in to the Pulchowk campus Wi-Fi portal. Enter your credentials on your phone, choose automatic or one-tap login, and save. No Android Studio, web build service, root or Magisk module is required.
+A native Android app for signing in to the Pulchowk campus Wi-Fi portal.
 
 ## 🎬 Demo
 
-<p align="center"><a href="assets/demo.mp4"><img src="assets/demo.gif" width="280" alt="Campus Wi-Fi connection demo"></a></p>
+<p align="center">
+  <a href="assets/demo.mp4">
+    <img src="assets/demo.gif" width="280" alt="Campus Wi-Fi login demo">
+  </a>
+</p>
 
-## ✨ What it does
+## ✨ Modes
 
-- **Automatic-login mode:** reacts to Wi-Fi/network events and a campus `10.100.x.x` address. A brief callback handles events that arrive before the IP. No periodic polling or permanent service.
-- **One-tap mode:** opening the configured app signs in and closes after success. On Android 7.1+, long-press the launcher icon → **Settings** to edit saved values.
-- **Manual Login:** available inside the app.
+- **Automatic-login mode:** when the phone connects to campus Wi-Fi and gets a `10.100.x.x` address, the app tries to sign in automatically.
+- **One-tap login mode:** if automatic login is off, open the app to sign in manually.
+- **Manual Login button:** you can also start a login from inside the app.
+- **Notifications:** the app can show whether login is in progress, successful, or failed.
 
-## 🪟 Build on Windows
+## 🪟 Build the APK on Windows
 
-Use Windows 10/11 x64 with internet access. After cloning this repository—or downloading and extracting its ZIP—open PowerShell in the project folder.
+This project is designed so a beginner can build it from PowerShell without installing Android Studio.
 
-Prepare the toolchain once:
+### 1. Clone the Repository
+```
+git clone https://github.com/rohityadav-sas/pcampus-login
+```
+### 2. Run the setup script
+
+Run:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
+cd pcampus-login
+.\setup.ps1
 ```
 
-Then build a debug APK:
+The first setup can take several minutes because Java and Android SDK files may need to be downloaded and extracted.
+
+### 3. Build a Debug APK
 
 ```powershell
 .\apk.ps1 -Debug
 ```
 
-The first build may download Gradle and build dependencies. Later builds reuse the local caches.
+The first build may also download Gradle and some build dependencies. This is normal and usually happens only once.
 
-Debug APK output:
+When the build finishes, the Debug APK will be at this location:
 
 ```text
-app/build/outputs/apk/debug/app-debug.apk
+app\build\outputs\apk\debug\app-debug.apk
 ```
 
-Useful commands:
+### 4. Build a release apk
 
-```powershell
-.\apk.ps1                  # Debug build
-.\apk.ps1 -Debug           # Debug build
-.\apk.ps1 -Install         # Debug build + install on an authorized ADB device
-.\apk.ps1 -Debug -Install  # Same, explicitly selecting Debug
-.\apk.ps1 -Release         # Signed release build; requires release signing setup
-.\apk.ps1 -Release -Install
-```
-
-For a first release, create a private release signing identity once:
+Run:
 
 ```powershell
 .\setup-keys.ps1
 ```
 
-This creates a PKCS12 release keystore under `signing/` and the local `keystore.properties` used by Gradle. Both are ignored by Git. Back up the keystore and its password securely; future releases must use the same signing identity.
+You will be asked to enter and confirm a password.
 
-The setup script reuses a complete compatible JDK (17–24) or installs Oracle JDK 21, configures `JAVA_HOME` and `ANDROID_HOME`, installs the current Android CLI when needed, and installs only missing Android SDK components required by this project. The bundled Gradle wrapper is used; no global Gradle installation is required.
+The script creates:
 
-## 📱 Compatibility and setup
+```text
+signing\release.p12
+keystore.properties
+```
 
-**This is a GitHub sideload build, not a Google Play release.** It retains target API 23 to preserve the tested legacy connectivity broadcasts. The supported source baseline is Android 6–14; real-device testing has been on Android 11 / MIUI. Other OEM behavior is not verified. Android 15+ blocks normal installation of apps targeting below API 24. Raising the target alone would change automatic-login delivery; modern Android support needs a separate implementation and testing.
+These files are private and are ignored by Git.
 
-1. Install the APK and open it once.
-2. Enter your campus username/password and enable **Automatic login**, or leave it off for one-tap mode.
-3. Save. On MIUI, allow **Autostart**, notifications, sound and floating notifications in system settings. MIUI may reset Autostart after an update.
-4. Connect to campus Wi-Fi. The app identifies the network by its IP range, not its SSID, and does not wait for “Authentication required.”
+**Important:** keep `release.p12` and its password backed up somewhere safe.
 
-No campus IP means no request. “No Internet” does not suppress login. DHCP, weak signal, Android broadcast delivery and portal timeouts can delay it. The app avoids duplicate attempts; it does not continuously refresh an expired portal session while you remain connected.
+You only need to run `setup-keys.ps1` once.
 
-The debug package is separate (`wifi.login.auto.debug`). Stable release builds use `wifi.login.auto`; the original repository's `wifi.login` app is a different package.
+### 5. Build the Release APK
 
-## 🔐 Privacy and release signing
+After release signing is set up, run:
 
-Credentials are entered on-device, stored in private app preferences with Android backup disabled, and sent only to the fixed campus portal over HTTPS. They are **not encrypted separately from app-private storage**. Root or a compromised device can read them. There is no analytics or credential-injection build workflow.
+```powershell
+.\apk.ps1 -Release
+```
 
-The campus uses a private certificate. The app remembers the certificate fingerprint on first use and checks it subsequently. First-use enrollment must happen on a trusted campus network; it is not independent proof of campus identity.
+The Release APK will be at this location:
 
-See [release signing and publishing](docs/RELEASING.md). Debug CI artifacts are test builds. Keep release keys private and preserve the same signing identity for updates.
+```text
+app\build\outputs\apk\release\app-release.apk
+```
 
-## 🧭 Project map
+## 📱 Install directly from PowerShell
 
-| Path | Purpose |
+If you have an Android phone connected with USB debugging enabled, you can build and install in one command.
+
+Debug:
+
+```powershell
+.\apk.ps1 -Debug -Install
+```
+
+Release:
+
+```powershell
+.\apk.ps1 -Release -Install
+```
+
+## 🧰 Command summary
+
+| Command | What it does |
 | --- | --- |
-| `app/src/main/java/wifi/login/auto/` | Native UI, login, receivers and notifications |
-| `app/src/main/AndroidManifest.xml` | Permissions and app components |
-| `setup.ps1` | Windows toolchain setup/repair |
-| `setup-keys.ps1` | One-time private release signing setup |
-| `apk.ps1` | Debug/release build with optional device installation |
-| `assets/` | Demo recording, GIF and animated banner |
-| `docs/` | Release and verification notes |
-| `.github/workflows/` | Windows CI build and downloadable debug artifact |
+| `.\setup.ps1` | Sets up Java and the Android SDK |
+| `.\setup-keys.ps1` | Creates the private release signing key once |
+| `.\apk.ps1` | Builds a Debug APK |
+| `.\apk.ps1 -Debug` | Builds a Debug APK |
+| `.\apk.ps1 -Release` | Builds the signed Release APK |
+| `.\apk.ps1 -Install` | Builds Debug and installs it on a connected phone |
+| `.\apk.ps1 -Release -Install` | Builds Release and installs it on a connected phone |
 
-## 🧪 Verification
+## 📱 Using the app
 
-See [verification and template audit](docs/VERIFICATION.md) for the exact checks and their limits. Contributions should follow [CONTRIBUTING.md](CONTRIBUTING.md).
+1. Install the APK and open the app.
+2. Enter your campus username and password.
+3. Turn on **Automatic login** if you want the app to sign in automatically.
+4. Save the settings.
+5. Connect to campus Wi-Fi.
+
+If automatic login is off, open the app whenever you want to sign in.
+
+On Android 7.1 and newer, you can long-press the app icon and open **Settings** if the shortcut is available.
+
+### MIUI / Xiaomi phones
+
+MIUI may restrict apps in the background.
+
+If automatic login does not work, allow:
+
+- Autostart
+- Notifications
+- Floating notifications
+- Notification sound, if wanted
+
+MIUI may reset some of these permissions after an app update.
+
+## 📶 How automatic login works
+
+The app checks whether the phone has `10.100.x.x` IP address and if it matches, the app sends the login request.
+
+Login can sometimes be delayed by:
+
+- slow DHCP
+- weak Wi-Fi
+- Android background restrictions
+- phone manufacturer power-saving features
+- a slow campus portal response
+
+## ⚠️ Android compatibility
+
+The app currently targets Android API 23 on purpose.
+
+This is kept for the older connectivity-broadcast behavior used by the automatic-login feature.
+
+The main supported range is Android 6 through Android 14.
+
+The app has mainly been tested on Android 11 / MIUI, so behavior may differ on other phones.
+
+Android 15 and newer normally block installation of apps that target below API 24. Supporting newer Android versions properly may require changes to the automatic-login system, not only changing the target SDK number.
+
+## 🔐 Privacy and security
+
+Your campus username and password are entered and stored on your phone.
+
+They are stored inside the app's private data area. Android backup is disabled.
+
+The app does not include analytics or send your credentials to another service.
+
+
+## 🧪 Contributing
+
+For contribution information, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Platform references
 

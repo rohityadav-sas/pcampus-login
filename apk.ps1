@@ -8,7 +8,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 if ($Debug -and $Release) {
-    throw 'Choose only one build type: -Debug or -Release.'
+    Write-Host '[ERROR] Choose only one build type: -Debug or -Release.' -ForegroundColor Red
+    exit 1
 }
 
 $Variant = if ($Release) { 'Release' } else { 'Debug' }
@@ -49,6 +50,20 @@ function Write-KeyValue {
 
     Write-Host "${Key}: " -ForegroundColor DarkGray -NoNewline
     Write-Host $Value -ForegroundColor $ValueColor
+}
+
+function Stop-Script {
+    param(
+        [Parameter(Mandatory)][string]$Message,
+        [string]$Details
+    )
+
+    Write-Host ''
+    Write-Log $Message 'ERROR'
+    if ($Details) {
+        Write-Host $Details -ForegroundColor DarkGray
+    }
+    exit 1
 }
 
 function ConvertTo-NativeArgument {
@@ -238,7 +253,7 @@ function Get-BuiltApk {
 }
 
 if (-not (Test-Path -LiteralPath $GradleWrapper)) {
-    throw "Gradle wrapper not found: $GradleWrapper"
+    Stop-Script 'Gradle wrapper is missing.' $GradleWrapper
 }
 
 $javaAvailable = $false
@@ -249,29 +264,18 @@ if (-not $javaAvailable) {
     $javaAvailable = $null -ne (Get-Command java.exe -ErrorAction SilentlyContinue)
 }
 if (-not $javaAvailable) {
-    throw 'Java is not configured. Run .\setup.ps1, then retry.'
+    Stop-Script 'Java is not configured.' 'Run .\setup.ps1, then retry.'
 }
 
 $SdkPath = Get-ProjectSdkPath
 if (-not $SdkPath) {
-    throw 'Android SDK is not configured. Run .\setup.ps1, then retry.'
+    Stop-Script 'Android SDK is not configured.' 'Run .\setup.ps1, then retry.'
 }
 
 if ($Release) {
     $signingStatus = Get-ReleaseSigningStatus
     if (-not $signingStatus.Ready) {
-        Write-Host ''
-        Write-Log 'Release signing is not configured.' 'ERROR'
-        Write-Host $signingStatus.Reason -ForegroundColor DarkGray
-        Write-Host ''
-        Write-Host 'Run:' -ForegroundColor DarkGray
-        Write-Host '  .\setup-keys.ps1' -ForegroundColor Cyan
-        Write-Host ''
-        Write-Host 'Then:' -ForegroundColor DarkGray
-        Write-Host '  .\apk.ps1 -Release' -ForegroundColor Green
-        Write-Host '  .\apk.ps1 -Release -Install' -ForegroundColor Green
-        Write-Host ''
-        throw 'Release build stopped because signing is not configured.'
+        Stop-Script 'Release signing is not configured.' "$($signingStatus.Reason)`nRun .\setup-keys.ps1, then retry .\apk.ps1 -Release."
     }
 }
 
@@ -289,12 +293,12 @@ finally {
 }
 
 if ($gradleExitCode -ne 0) {
-    throw "Gradle $Variant build failed with exit code $gradleExitCode."
+    Stop-Script "Gradle $Variant build failed." "Exit code: $gradleExitCode"
 }
 
 $apk = Get-BuiltApk
 if (-not $apk) {
-    throw "Build succeeded, but no APK was found under: $ApkRoot"
+    Stop-Script 'Build finished, but no APK was found.' $ApkRoot
 }
 
 $sizeKb = $apk.Length / 1KB
@@ -320,7 +324,7 @@ if (-not $Install) {
 }
 
 if ($isUnsigned) {
-    throw 'Cannot install an unsigned APK. Configure release signing or use a Debug build.'
+    Stop-Script 'Cannot install an unsigned APK.' 'Configure release signing or use a Debug build.'
 }
 
 Write-Host ''
@@ -328,19 +332,19 @@ Write-Log 'Checking connected Android device...' 'CHECK'
 
 $adb = Find-Adb -SdkPath $SdkPath
 if (-not $adb) {
-    throw 'ADB was not found. Run .\setup.ps1, then retry.'
+    Stop-Script 'ADB was not found.' 'Run .\setup.ps1, then retry.'
 }
 
 $adbStart = Invoke-NativeCaptured -FilePath $adb -Arguments @('start-server')
 if ($adbStart.ExitCode -ne 0) {
     $details = @($adbStart.StdOut, $adbStart.StdErr) | Where-Object { $_ } | ForEach-Object { $_.Trim() }
-    throw "Failed to start the ADB server.`n$($details -join [Environment]::NewLine)"
+    Stop-Script 'Failed to start the ADB server.' ($details -join [Environment]::NewLine)
 }
 
 $adbDevices = Invoke-NativeCaptured -FilePath $adb -Arguments @('devices')
 if ($adbDevices.ExitCode -ne 0) {
     $details = @($adbDevices.StdOut, $adbDevices.StdErr) | Where-Object { $_ } | ForEach-Object { $_.Trim() }
-    throw "Failed to query ADB devices.`n$($details -join [Environment]::NewLine)"
+    Stop-Script 'Failed to query ADB devices.' ($details -join [Environment]::NewLine)
 }
 $deviceOutput = @($adbDevices.StdOut -split "`r?`n")
 
@@ -358,9 +362,9 @@ foreach ($line in $deviceOutput) {
 
 if ($authorized.Count -eq 0) {
     if ($problemDevices.Count -gt 0) {
-        throw "No authorized Android device is available: $($problemDevices -join ', '). Unlock the device and accept the USB debugging prompt."
+        Stop-Script 'No authorized Android device is available.' "$($problemDevices -join ', '). Unlock the device and accept the USB debugging prompt."
     }
-    throw 'No Android device is connected. Connect a device with USB debugging enabled, then retry with -Install.'
+    Stop-Script 'No Android device is connected.' 'Connect a device with USB debugging enabled, then retry with -Install.'
 }
 
 $serial = $null
@@ -371,7 +375,7 @@ elseif ($authorized.Count -eq 1) {
     $serial = $authorized[0]
 }
 else {
-    throw "Multiple Android devices are connected: $($authorized -join ', '). Set ANDROID_SERIAL or leave only one device connected."
+    Stop-Script 'Multiple Android devices are connected.' "$($authorized -join ', '). Set ANDROID_SERIAL or leave only one device connected."
 }
 
 $modelResult = Invoke-NativeCaptured -FilePath $adb -Arguments @('-s', $serial, 'shell', 'getprop', 'ro.product.model')
@@ -388,6 +392,7 @@ if ($androidCli) {
     Write-Log "Installing $($apk.Name) with fast delta install..." 'INSTALL'
 
     $androidArgs = @(
+        '--no-metrics',
         "--sdk=$SdkPath",
         'install',
         "--apks=$($apk.FullName)",
@@ -417,7 +422,7 @@ if (-not $installed) {
         else {
             $adbOutput -join [Environment]::NewLine
         }
-        throw "APK installation failed.`n$details"
+        Stop-Script 'APK installation failed.' $details
     }
 
     Write-Log 'APK installed successfully using ADB.' 'OK'

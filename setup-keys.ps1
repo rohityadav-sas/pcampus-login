@@ -271,12 +271,6 @@ if ($existingConfig) {
                 Write-Host "Alias: $($existingConfig['keyAlias'])" -ForegroundColor Cyan
             }
             Write-Host ''
-            Write-Host 'Nothing was changed.' -ForegroundColor Yellow
-            Write-Host 'Because signing identity changes are consequential, this script never replaces an existing key.' -ForegroundColor Yellow
-            Write-Host ''
-            Write-Host 'If this app has never been distributed and you intentionally want a fresh PKCS12 identity:' -ForegroundColor DarkGray
-            Write-Host '  1. Back up or remove the current keystore and keystore.properties.' -ForegroundColor DarkGray
-            Write-Host '  2. Run .\setup-keys.ps1 again.' -ForegroundColor DarkGray
             return
         }
     }
@@ -286,11 +280,6 @@ if ($existingConfig) {
 
 if (Test-Path -LiteralPath $KeystorePath) {
     throw "A keystore already exists at $KeystorePath. Refusing to overwrite it. Back it up or remove it intentionally, then rerun."
-}
-
-$aliasInput = Read-Host "Key alias [$Alias]"
-if (-not [string]::IsNullOrWhiteSpace($aliasInput)) {
-    $Alias = $aliasInput.Trim()
 }
 
 if ($Alias -notmatch '^[A-Za-z0-9._-]+$') {
@@ -368,8 +357,5 @@ finally {
 
 Write-Host ''
 Write-Log 'Release signing is configured.' 'OK'
-Write-Host ''
 Write-Host "Keystore: $KeystorePath" -ForegroundColor Cyan
-Write-Host 'Type: PKCS12' -ForegroundColor Cyan
-Write-Host "Alias: $Alias" -ForegroundColor Cyan
-Write-Host "Properties: $PropertiesPath" -ForegroundColor Cyan
+Write-Host "Alias: $Alias (PKCS12)" -ForegroundColor Cyan
