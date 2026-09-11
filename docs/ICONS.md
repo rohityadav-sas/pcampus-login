@@ -14,14 +14,14 @@ Generated older-Android sizes are 48, 72, 96, 144 and 192 pixels, plus a padded 
 
 ## If both files exist
 
-**Neither takes priority.** The build stops and tells you to remove one or explicitly choose:
+**Neither takes priority.** The script displays a menu: **1 = SVG**, **2 = PNG**, **Q = cancel**. Invalid answers prompt again; Enter without a choice cancels. To skip the prompt, explicitly choose:
 
 ```powershell
 .\apk.ps1 -Release -IconSource assets/icon/icon.png
 .\apk.ps1 -Release -IconSource assets/icon/icon.svg
 ```
 
-The choice applies to that build only. To avoid specifying it each time, keep only your preferred source. Invalid or missing sources do not silently fall back to another icon.
+The choice applies to that build only. To avoid specifying it each time, keep only your preferred source. In CI or PowerShell `-NonInteractive` mode, both files require an explicit choice. Invalid or missing sources produce a short error and a nonzero exit code; APK building stops. No silent fallback is used.
 
 ## SVG requirements
 

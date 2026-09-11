@@ -319,6 +319,7 @@ if ($Release) {
 
 Write-Log "Building $Variant APK..." 'BUILD'
 & (Join-Path $PSScriptRoot 'update-icon.ps1') -Source $IconSource
+if ($LASTEXITCODE -ne 0) { exit 1 }
 $timer = [Diagnostics.Stopwatch]::StartNew()
 
 Push-Location -LiteralPath $PSScriptRoot
