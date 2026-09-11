@@ -301,7 +301,7 @@ function Invoke-SdkSetup {
     $info.UseShellExecute = $false
     $info.CreateNoWindow = $true
     $info.RedirectStandardInput = $true
-    $info.StandardInputEncoding = [Text.UTF8Encoding]::new($false)
+
     $info.RedirectStandardOutput = $true
     $info.RedirectStandardError = $true
     $process = [Diagnostics.Process]::new()
@@ -314,7 +314,7 @@ function Invoke-SdkSetup {
         while (-not $process.WaitForExit(300)) {
             if ([DateTime]::UtcNow -gt $deadline) { $process.Kill(); throw 'SDK manager timed out.' }
             # sdkmanager can replace its buffered reader between prompts. Do not send all answers at once.
-            try { $process.StandardInput.Write($Answer + "`n"); $process.StandardInput.Flush() } catch [IO.IOException] { }
+            try { $answerBytes = [Text.Encoding]::ASCII.GetBytes($Answer + "`n"); $process.StandardInput.BaseStream.Write($answerBytes, 0, $answerBytes.Length); $process.StandardInput.BaseStream.Flush() } catch [IO.IOException] { }
         }
         $output = $outputTask.GetAwaiter().GetResult()
         $errors = $errorTask.GetAwaiter().GetResult()
