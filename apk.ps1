@@ -1,7 +1,8 @@
 ﻿param(
     [switch]$Debug,
     [switch]$Release,
-    [switch]$Install
+    [switch]$Install,
+    [string]$IconSource = ''
 )
 
 Set-StrictMode -Version Latest
@@ -317,7 +318,7 @@ if ($Release) {
 }
 
 Write-Log "Building $Variant APK..." 'BUILD'
-& (Join-Path $PSScriptRoot 'update-icon.ps1')
+& (Join-Path $PSScriptRoot 'update-icon.ps1') -Source $IconSource
 $timer = [Diagnostics.Stopwatch]::StartNew()
 
 Push-Location -LiteralPath $PSScriptRoot
