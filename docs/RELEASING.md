@@ -45,3 +45,7 @@ Debug APKs are test builds, not stable distribution releases. This checkout curr
 The release package is `wifi.login.auto`. Debug builds use `wifi.login.auto.debug`, so debug and release installations remain separate.
 
 Never commit `keystore.properties`, `signing/`, signing passwords, private keys, prebuilt APKs, or device preferences.
+
+## Published variants
+
+See [DOWNLOADS.md](DOWNLOADS.md) for the four v1.3.0 APKs, source tags, recommendation order and runtime limits. Build each branch with the same private release key. Verify package, version, signature and SHA-256 before uploading.
