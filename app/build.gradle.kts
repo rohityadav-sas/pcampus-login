@@ -1,72 +1,29 @@
-plugins {
-    alias(libs.plugins.android.application)
-}
-
+import java.util.Properties
+plugins { id("com.android.application") }
+val signing = Properties().apply { val f = rootProject.file("keystore.properties"); if (f.isFile) f.inputStream().use { load(it) } }
+val signingReady = listOf("storeFile", "storePassword", "keyAlias", "keyPassword").all { !signing.getProperty(it).isNullOrBlank() } && rootProject.file(signing.getProperty("storeFile", "missing")).isFile
+if (gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) } && !signingReady) throw GradleException("Configure keystore.properties for release signing. See docs/RELEASING.md.")
 android {
-    namespace = "wifi.login"
-    compileSdk = 35
-
-    defaultConfig {
-        applicationId = "wifi.login"
-        minSdk = 23
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
-        multiDexEnabled = false
-    }
-
-
-    buildTypes {
-        release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            signingConfig = signingConfigs.getByName("debug")
-        }
-        debug {
-            isMinifyEnabled = false
-            isShrinkResources = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-
-    dependenciesInfo {
-        includeInApk = false
-        includeInBundle = false
-    }
-
-    buildFeatures {
-        buildConfig = false
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("armeabi-v7a")
-            isUniversalApk = false
-        }
-    }
-
-    packaging {
-        resources {
-            excludes += listOf(
-                "META-INF/**",
-                "kotlin/**",
-                "**.properties"
-            )
-        }
-    }
-
+ namespace = "wifi.login.auto"
+ compileSdk = 36
+ buildToolsVersion = "36.0.0"
+ defaultConfig {
+  applicationId = "wifi.login.auto"
+  minSdk = 23
+  targetSdk = 23 // Deliberate legacy broadcast behavior; see README compatibility.
+  versionCode = 2
+  versionName = "1.1.0"
+ }
+ signingConfigs { if (signingReady) create("release") {
+  storeFile = rootProject.file(signing.getProperty("storeFile"))
+  storePassword = signing.getProperty("storePassword")
+  keyAlias = signing.getProperty("keyAlias")
+  keyPassword = signing.getProperty("keyPassword")
+ } }
+ buildTypes {
+  debug { applicationIdSuffix = ".debug"; versionNameSuffix = "-debug" }
+  release { isMinifyEnabled = false; signingConfig = signingConfigs.findByName("release") }
+ }
+ compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+ lint { abortOnError = true; disable += "ExpiredTargetSdkVersion" }
 }

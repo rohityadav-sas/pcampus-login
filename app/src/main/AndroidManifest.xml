@@ -1,18 +1,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Android 11 device-specific build: target 23 retains manifest connectivity broadcasts. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <application
-        android:label="IOE Login"
-        android:icon="@mipmap/ic_launcher">
-        <activity
-            android:name=".MainActivity"
-            android:label="IOE Login"
-            android:icon="@mipmap/ic_launcher"
-            android:theme="@android:style/Theme.Light.NoTitleBar"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <application android:label="Campus Wi-Fi" android:allowBackup="false" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:icon="@android:drawable/ic_lock_idle_lock">
+        <activity android:name=".MainActivity" android:exported="true" android:resizeableActivity="true">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity>
+        <receiver android:name=".NetworkReceiver" android:exported="false">
+            <intent-filter><action android:name="android.net.conn.CONNECTIVITY_CHANGE" /><action android:name="android.net.wifi.STATE_CHANGE" /></intent-filter>
+        </receiver>
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" /><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
+        </receiver>
     </application>
 </manifest>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 240" role="img" aria-label="Campus Wi-Fi: connect once, sign in automatically">
+<rect width="1000" height="240" fill="#172a35"/>
+<path fill="#167568" opacity=".5" d="M0 175 Q250 120 500 180 T1000 165 V240 H0Z"><animate attributeName="d" dur="7s" repeatCount="indefinite" values="M0 175 Q250 120 500 180 T1000 165 V240 H0Z;M0 165 Q250 215 500 160 T1000 175 V240 H0Z;M0 175 Q250 120 500 180 T1000 165 V240 H0Z"/></path>
+<path fill="#167568" d="M0 210 Q250 165 500 210 T1000 195 V240 H0Z"/>
+<text x="500" y="95" text-anchor="middle" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="48" font-weight="700">Campus Wi-Fi</text>
+<text x="500" y="140" text-anchor="middle" fill="#c9e7e3" font-family="Segoe UI,Arial,sans-serif" font-size="20">Native. Simple. Ready when campus Wi-Fi is.</text>
+</svg>
