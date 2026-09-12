@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
     [int]$MinimumJavaVersion = 17,
     [int]$MaximumJavaVersion = 24,
@@ -8,6 +8,7 @@ param(
 )
 
 Set-StrictMode -Version Latest
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Add-Type -AssemblyName System.Net.Http
@@ -17,8 +18,8 @@ $JavaRoot = Join-Path $env:LOCALAPPDATA 'Programs\Java'
 $OracleJdkUrl = 'https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.zip'
 $AndroidCliInstallerUrl = 'https://dl.google.com/android/cli/latest/windows_x86_64/install.cmd'
 
-. (Join-Path $PSScriptRoot 'scripts\android-project.ps1')
-$moduleInfo = Get-AndroidApplicationModule -ProjectRoot $PSScriptRoot -Module $Module
+. (Join-Path $ProjectRoot 'scripts\android-project.ps1')
+$moduleInfo = Get-AndroidApplicationModule -ProjectRoot $ProjectRoot -Module $Module
 $projectRequirements = Get-AndroidProjectRequirements -ModuleInfo $moduleInfo
 if ($CompileSdk -le 0) { $CompileSdk = $projectRequirements.CompileSdk }
 if (-not $BuildToolsVersion -and $projectRequirements.BuildToolsVersion) {
@@ -255,7 +256,7 @@ function Find-CompatibleJdk {
 }
 
 function Get-LocalPropertiesSdkPath {
-    $localProperties = Join-Path $PSScriptRoot 'local.properties'
+    $localProperties = Join-Path $ProjectRoot 'local.properties'
     if (-not (Test-Path -LiteralPath $localProperties)) {
         return $null
     }

@@ -58,7 +58,7 @@ Run:
 
 ```powershell
 cd pcampus-login
-.\setup-environment.ps1
+.\scripts\setup-environment.ps1
 ```
 
 The first setup can take several minutes because Java and Android SDK files may need to be downloaded and extracted. The script reads `compileSdk` and an optional Build Tools pin from the app, and uses the latest Android command-line tools. Without a pin, Android Gradle Plugin selects its compatible Build Tools version.
@@ -68,7 +68,7 @@ The scripts find the Android application module automatically. A project with mo
 ### 3. Build a Debug APK
 
 ```powershell
-.\apk.ps1 -Debug
+.\scripts\apk.ps1 -Debug
 ```
 
 The first build may also download Gradle and some build dependencies. This is normal and usually happens only once.
@@ -84,7 +84,7 @@ app\build\outputs\apk\debug\app-debug.apk
 Run:
 
 ```powershell
-.\setup-keys.ps1
+.\scripts\setup-keys.ps1
 ```
 
 You will be asked to enter and confirm a password.
@@ -107,7 +107,7 @@ You only need to run `setup-keys.ps1` once.
 After release signing is set up, run:
 
 ```powershell
-.\apk.ps1 -Release
+.\scripts\apk.ps1 -Release
 ```
 
 The Release APK will be at this location:
@@ -121,7 +121,7 @@ app\build\outputs\apk\release\app-release.apk
 For Google Play or another store that accepts Android App Bundles, run:
 
 ```powershell
-.\apk.ps1 -Aab
+.\scripts\apk.ps1 -Aab
 ```
 
 The signed AAB will be at:
@@ -139,27 +139,27 @@ If you have an Android phone connected with USB debugging enabled, you can build
 Debug:
 
 ```powershell
-.\apk.ps1 -Debug -Install
+.\scripts\apk.ps1 -Debug -Install
 ```
 
 Release:
 
 ```powershell
-.\apk.ps1 -Release -Install
+.\scripts\apk.ps1 -Release -Install
 ```
 
 ## 🧰 Command summary
 
 | Command | What it does |
 | --- | --- |
-| `.\setup-environment.ps1` | Sets up Java and the Android SDK |
-| `.\setup-keys.ps1` | Creates the private release signing key once |
-| `.\apk.ps1` | Builds a Debug APK |
-| `.\apk.ps1 -Debug` | Builds a Debug APK |
-| `.\apk.ps1 -Release` | Builds the signed Release APK |
-| `.\apk.ps1 -Aab` | Runs tests and release lint, then builds a signed Release AAB |
-| `.\apk.ps1 -Install` | Builds Debug and installs it on a connected phone |
-| `.\apk.ps1 -Release -Install` | Builds Release and installs it on a connected phone |
+| `.\scripts\setup-environment.ps1` | Sets up Java and the Android SDK |
+| `.\scripts\setup-keys.ps1` | Creates the private release signing key once |
+| `.\scripts\apk.ps1` | Builds a Debug APK |
+| `.\scripts\apk.ps1 -Debug` | Builds a Debug APK |
+| `.\scripts\apk.ps1 -Release` | Builds the signed Release APK |
+| `.\scripts\apk.ps1 -Aab` | Runs tests and release lint, then builds a signed Release AAB |
+| `.\scripts\apk.ps1 -Install` | Builds Debug and installs it on a connected phone |
+| `.\scripts\apk.ps1 -Release -Install` | Builds Release and installs it on a connected phone |
 
 ## 🎨 Change the app icon
 
@@ -168,11 +168,11 @@ Release:
 3. Choose the icon format to build with:
 
 ```powershell
-   .\apk.ps1 -Release -Icon png
-   .\apk.ps1 -Release -Icon svg
+   .\scripts\apk.ps1 -Release -Icon png
+   .\scripts\apk.ps1 -Release -Icon svg
 ```
 
-   - If only one icon file is present, you can simply run `.\apk.ps1 -Release`.
+   - If only one icon file is present, you can simply run `.\scripts\apk.ps1 -Release`.
    - If both are present and `-Icon` is not specified, the script will prompt you to choose one.
 
 ## 📱 Using the app

@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$Alias = 'release',
     [string]$KeystoreRelativePath = 'signing/key.p12',
     [int]$KeySize = 3072,
@@ -8,14 +8,15 @@
 )
 
 Set-StrictMode -Version Latest
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
 $ErrorActionPreference = 'Stop'
 
-$PropertiesPath = Join-Path $PSScriptRoot 'keystore.properties'
-$KeystorePath = Join-Path $PSScriptRoot ($KeystoreRelativePath -replace '/', '\')
+$PropertiesPath = Join-Path $ProjectRoot 'keystore.properties'
+$KeystorePath = Join-Path $ProjectRoot ($KeystoreRelativePath -replace '/', '\')
 $SigningDirectory = Split-Path -Parent $KeystorePath
-. (Join-Path $PSScriptRoot 'scripts\android-project.ps1')
+. (Join-Path $ProjectRoot 'scripts\android-project.ps1')
 if (-not $DistinguishedName) {
-    $projectName = Get-AndroidProjectName -ProjectRoot $PSScriptRoot
+    $projectName = Get-AndroidProjectName -ProjectRoot $ProjectRoot
     $safeProjectName = $projectName -replace '[,=+<>#;"\\]', '_'
     $DistinguishedName = "CN=$safeProjectName Release"
 }
@@ -211,7 +212,7 @@ function Write-KeystoreProperties {
 }
 
 function Test-IgnoreRules {
-    $gitignore = Join-Path $PSScriptRoot '.gitignore'
+    $gitignore = Join-Path $ProjectRoot '.gitignore'
     if (-not (Test-Path -LiteralPath $gitignore)) {
         throw '.gitignore is missing. Refusing to create private signing material.'
     }
@@ -255,7 +256,7 @@ Test-IgnoreRules
 
 $keytool = Get-Keytool
 if (-not $keytool) {
-    throw 'keytool.exe was not found. Run .\setup-environment.ps1 first, then run .\setup-keys.ps1.'
+    throw 'keytool.exe was not found. Run .\scripts\setup-environment.ps1 first, then run .\scripts\setup-keys.ps1.'
 }
 Write-Log "Using keytool: $keytool" 'OK'
 
@@ -264,7 +265,7 @@ if ($existingConfig) {
     $existingStoreFile = $existingConfig['storeFile']
 
     if ($existingStoreFile) {
-        $existingPath = Join-Path $PSScriptRoot ($existingStoreFile -replace '/', '\')
+        $existingPath = Join-Path $ProjectRoot ($existingStoreFile -replace '/', '\')
 
         if (Test-Path -LiteralPath $existingPath) {
             Write-Host ''
