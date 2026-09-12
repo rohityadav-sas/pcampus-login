@@ -23,6 +23,8 @@ Choose the APK that fits your phone. Try them in this order:
 
 On Xiaomi/MIUI, enable **Autostart** (or **Background autostart**), set battery use to **No restrictions**, and allow notifications. Background restrictions can affect every variant; the modern variant is especially sensitive to the app being stopped or frozen. Reopen the app if automatic login stops.
 
+Install and enable automatic login in only **one variant at a time**. The APKs have separate settings and can be installed side by side. The release includes `SHA256SUMS.txt` and `SOURCE-COMMITS.txt`; source tags are `v1.3.1-legacy`, `v1.3.1-modern`, `v1.3.1-foreground`, and `v1.3.1-root`. Reboot recovery and Android 15/16 runtime behavior have not been verified for every variant.
+
 ## 🎬 Demo
 
 <p align="center">
