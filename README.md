@@ -137,11 +137,18 @@ Release:
 
 ## 🎨 Change the app icon
 
-Replace `assets/icon/icon.svg`, then build with `./apk.ps1 -Release` (or `./apk.ps1` for debug). The build automatically regenerates the launcher resources. No Android Studio or image tools are needed.
+Put `icon.svg` or a **1024×1024 still PNG** at `assets/icon/`, then build:
 
-Use a simple SVG containing paths with a `viewBox="0 0 width height"`. Fill/stroke colors (`#RGB`, `#RRGGBB`, `none`), stroke width, caps and joins are supported. Convert text/shapes to paths and flatten groups, transforms and styles before saving. Separate SVG arc flags with spaces, as in the supplied icon. Unsupported elements/attributes stop generation with an explanation.
+```powershell
+.pk.ps1 -Release -Icon png
+.pk.ps1 -Release -Icon svg
+```
 
-To generate resources manually before using Gradle directly, run `./update-icon.ps1`. To change the white background, edit the default `$Background` in that script. Generated resources include the older Android icon, adaptive icon and Android 13+ themed icon. Install the rebuilt APK to see the change; some launchers cache icons until restarted.
+`-Image` is an alias for `-Icon`; values are case-insensitive. Without an explicit choice, one available file is selected automatically; if both exist, a menu asks **1 = SVG, 2 = PNG, Q = cancel**. For a custom path, use `-IconSource path/to/icon.png` instead. Do not combine it with `-Icon`.
+
+PNG keeps its colors; transparency is optional. Invalid dimensions, unsupported files, missing sources and conflicting arguments stop the build with a short error. The generator adds approximately **29.6% padding per side**, so avoid excess blank space in your source. PNG does not generate a custom monochrome layer.
+
+See [icon requirements and troubleshooting](docs/ICONS.md). `apk.ps1` regenerates icons before every build. With Gradle directly, run `./update-icon.ps1` first. For a standalone explicit choice, use `./update-icon.ps1 -Source assets/icon/icon.png`.
 
 ## 📱 Using the app
 
@@ -208,3 +215,7 @@ For contribution information, see [CONTRIBUTING.md](CONTRIBUTING.md).
 - [Android 15 minimum target requirement](https://developer.android.com/about/versions/15/behavior-changes-all#minimum-target-api-level)
 - [PendingIntent network callbacks](https://developer.android.com/reference/android/net/ConnectivityManager#registerNetworkCallback(android.net.NetworkRequest,%20android.app.PendingIntent))
 - [Android Gradle Plugin 8.13 compatibility](https://developer.android.com/build/releases/agp-8-13-0-release-notes)
+
+## Maintaining shared documentation
+
+See [how to copy a documentation commit to the other branches](docs/BRANCHES.md). Branch changes are not synchronized automatically.
