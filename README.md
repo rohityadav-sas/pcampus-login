@@ -137,18 +137,17 @@ Release:
 
 ## 🎨 Change the app icon
 
-Put `icon.svg` or a **1024×1024 still PNG** at `assets/icon/`, then build:
+1. Add your icon to `assets/icon/`. Name it `icon.png` or `icon.svg`. A PNG must be a still image exactly **1024 × 1024 pixels**.
+2. Build the app. Choose the file you want:
 
 ```powershell
-.pk.ps1 -Release -Icon png
-.pk.ps1 -Release -Icon svg
+.\apk.ps1 -Release -Icon png
+.\apk.ps1 -Release -Icon svg
 ```
 
-Values for `-Icon` are case-insensitive. Without an explicit choice, one available file is selected automatically; if both exist, a menu asks **1 = SVG, 2 = PNG, Q = cancel**. For a custom path, use `-IconSource path/to/icon.png` instead. Do not combine it with `-Icon`.
+If only one icon file is present, you can simply run `.\apk.ps1 -Release`. If both are present and you do not specify `-Icon`, the script asks you to choose one. Your PNG keeps its colors. Keep the artwork centered with little empty space around it; the script adds padding for Android.
 
-PNG keeps its colors; transparency is optional. Invalid dimensions, unsupported files, missing sources and conflicting arguments stop the build with a short error. The generator adds approximately **29.6% padding per side**, so avoid excess blank space in your source. PNG does not generate a custom monochrome layer.
-
-See [icon requirements and troubleshooting](docs/ICONS.md). `apk.ps1` regenerates icons before every build. With Gradle directly, run `./update-icon.ps1` first. For a standalone explicit choice, use `./update-icon.ps1 -Source assets/icon/icon.png`.
+The build updates the app icon automatically. For other file names, SVG limits, or troubleshooting, see [the icon guide](docs/ICONS.md).
 
 ## 📱 Using the app
 
