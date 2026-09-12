@@ -14,16 +14,14 @@ A native Android app for signing in to the Pulchowk campus Wi-Fi portal.
 
 Choose the APK that fits your phone. Try them in this order:
 
-| # | APK | Best for | Branch / package |
-|:-:|-----|----------|------------------|
-| 1 | `Campus-WiFi-v1.3.1-root.apk` | Rooted phones with Magisk or `su`; no permanent notification. | `root`<br>`wifi.login.root` |
-| 2 | `Campus-WiFi-v1.3.1-foreground.apk` | Non-root phones; keeps a permanent notification to stay active. | `permanent-notification`<br>`wifi.login.foreground` |
-| 3 | `Campus-WiFi-v1.3.1-legacy.apk` | Android 6–14; listens for older Wi-Fi connection broadcasts, without a permanent notification. | `main`<br>`wifi.login.auto` |
-| 4 | `Campus-WiFi-v1.3.1-modern.apk` | Android 15+; uses network callbacks and a one-time wake-up subscription, without a permanent notification. | `android-15`<br>`wifi.login.android15` |
+| # | APK | Best For | Branch / Package |
+|:-:|-----|----------|-------------------|
+| 1 | `Campus-WiFi-v1.3.1-root.apk` | 🔓 **Rooted devices** with Magisk/su. No permanent notification. | `root`<br>`wifi.login.root` |
+| 2 | `Campus-WiFi-v1.3.1-foreground.apk` | ⭐ **Recommended for non-root users.** Requires a permanent notification. | `permanent-notification`<br>`wifi.login.foreground` |
+| 3 | `Campus-WiFi-v1.3.1-legacy.apk` | 📱 **Android 6–14.** Uses older Wi-Fi connection broadcasts. No permanent notification. | `main`<br>`wifi.login.auto` |
+| 4 | `Campus-WiFi-v1.3.1-modern.apk` | 📱 **Android 15+** Uses network callbacks with a one-shot wake-up subscription. No permanent notification | `android-15`<br>`wifi.login.android15` |
 
-On Xiaomi/MIUI, enable **Autostart** (or **Background autostart**), set battery use to **No restrictions**, and allow notifications. Background restrictions can affect every variant; the modern variant is especially sensitive to the app being stopped or frozen. Reopen the app if automatic login stops.
-
-Install and enable automatic login in only **one variant at a time**. The APKs have separate settings and can be installed side by side. The release includes `SHA256SUMS.txt` and `SOURCE-COMMITS.txt`; source tags are `v1.3.1-legacy`, `v1.3.1-modern`, `v1.3.1-foreground`, and `v1.3.1-root`. Reboot recovery and Android 15/16 runtime behavior have not been verified for every variant.
+> **Note:** Start with option 2 on non-rooted phones. On **Xiaomi/MIUI**, enable **Autostart**, set battery usage to **No restrictions**, and allow notifications. Background restrictions can affect all variants, but option 4 is especially vulnerable to process killing or freezing. If automatic login stops, reopen the app.
 
 ## 🎬 Demo
 
@@ -100,8 +98,6 @@ These files are private and are ignored by Git.
 
 **Important:** keep `release.p12` and its password backed up somewhere safe.
 
-Use the **same release key** when building all four variants or updating an installed APK. Each variant has its own package name, so they can be installed side by side. Debug builds use a separate package name ending in `.debug` and are for testing.
-
 You only need to run `setup-keys.ps1` once.
 
 ### 5. Build the Release APK
@@ -117,8 +113,6 @@ The Release APK will be at this location:
 ```text
 app\build\outputs\apk\release\app-release.apk
 ```
-
-Before publishing an update, increase `versionCode`, test the release APK, and verify its signature with Android SDK `apksigner`. Keep `keystore.properties`, the `signing/` folder, passwords, and private keys out of Git. Attach the signed APK and its SHA-256 checksum to the GitHub release.
 
 ## 📱 Install directly from PowerShell
 
@@ -150,18 +144,17 @@ Release:
 
 ## 🎨 Change the app icon
 
-1. Add your icon to `assets/icon/`. (SVG and PNG are supported)
-2. A PNG must be a still image exactly **1024 × 1024 pixels**. Keep the artwork centered, with little empty space around it. Color and transparency are supported.
-3. Choose the icon you want:
+1. Add your icon to `assets/icon/`. SVG and PNG are supported.
+2. If using PNG, it must be **1024 × 1024 pixels**. Keep the artwork centered, with minimal empty space around it. Color and transparency are supported.
+3. Choose the icon format to build with:
 
 ```powershell
-.\apk.ps1 -Release -Icon png
-.\apk.ps1 -Release -Icon svg
+   .\apk.ps1 -Release -Icon png
+   .\apk.ps1 -Release -Icon svg
 ```
 
-If only one icon file is present, you can simply run `.\apk.ps1 -Release`. If both are present and you do not specify `-Icon`, the script asks you to choose one.
-
-The build updates the icon automatically. To use a different file name, pass `-IconSource path/to/icon.png` instead of `-Icon`. SVG icons need paths and a `viewBox`; complex SVG effects and text are not supported. If you build with Gradle directly, run `.\update-icon.ps1` first. Install the new APK to see the icon; your phone's launcher may cache the old one.
+   - If only one icon file is present, you can simply run `.\apk.ps1 -Release`.
+   - If both are present and `-Icon` is not specified, the script will prompt you to choose one.
 
 ## 📱 Using the app
 
@@ -206,9 +199,6 @@ They are stored inside the app's private data area. Android backup is disabled.
 
 The app does not include analytics or send your credentials to another service.
 
-For the fixed campus login endpoint, the app does not verify its HTTPS certificate.
-
-
 ## 🧪 Contributing
 
 For contribution information, see [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -218,21 +208,3 @@ For contribution information, see [CONTRIBUTING.md](CONTRIBUTING.md).
 - [Android 15 minimum target requirement](https://developer.android.com/about/versions/15/behavior-changes-all#minimum-target-api-level)
 - [Android 7 connectivity broadcast changes](https://developer.android.com/about/versions/nougat/android-7.0-changes#bg-opt)
 - [Android Gradle Plugin 8.13 compatibility](https://developer.android.com/build/releases/agp-8-13-0-release-notes)
-
-## Keeping the README in sync across branches
-
-Each branch has its own README. To copy a README change, commit it on one branch and cherry-pick that commit onto the other three. For example, after committing on `main`:
-
-```powershell
-$readmeCommit = git rev-parse HEAD
-git switch android-15
-git cherry-pick $readmeCommit
-git switch permanent-notification
-git cherry-pick $readmeCommit
-git switch root
-git cherry-pick $readmeCommit
-git switch main
-git push origin main android-15 permanent-notification root
-```
-
-Commit unrelated work separately, and resolve any conflicts before continuing. Changes to a GitHub release description or its APK files must be made separately.
