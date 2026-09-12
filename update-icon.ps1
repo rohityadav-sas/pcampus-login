@@ -12,7 +12,7 @@ trap {
 }
 if (-not $Source) {
     $candidates = @('icon.svg', 'icon.png' | ForEach-Object { Join-Path $PSScriptRoot "assets\icon\$_" } | Where-Object { Test-Path -LiteralPath $_ })
-    if ($candidates.Count -eq 0) { throw 'Add assets/icon/icon.svg or a 1024x1024 icon.png. See docs/ICONS.md.' }
+    if ($candidates.Count -eq 0) { throw 'Add assets/icon/icon.svg or a 1024x1024 icon.png. See README.md.' }
     if ($candidates.Count -gt 1) {
         if ($env:CI -or [Environment]::GetCommandLineArgs() -match '^-NonInteractive$') {
             throw 'Both icons exist. Specify -Source assets/icon/icon.png (update-icon.ps1) or -IconSource assets/icon/icon.png (apk.ps1).'
@@ -37,7 +37,7 @@ if ([IO.Path]::GetExtension($Source) -ieq '.png') {
     & (Join-Path $PSScriptRoot 'scripts\png-icon.ps1') -Source $Source -Background $Background
     exit 0
 }
-if ([IO.Path]::GetExtension($Source) -ine '.svg') { throw 'Only .svg and .png icons are supported. See docs/ICONS.md.' }
+if ([IO.Path]::GetExtension($Source) -ine '.svg') { throw 'Only .svg and .png icons are supported. See README.md.' }
 $culture = [Globalization.CultureInfo]::InvariantCulture
 
 function Color([string]$value) {
