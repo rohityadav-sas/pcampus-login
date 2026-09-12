@@ -90,13 +90,13 @@ You will be asked to enter and confirm a password.
 The script creates:
 
 ```text
-signing\release.p12
+signing\key.p12
 keystore.properties
 ```
 
 These files are private and are ignored by Git.
 
-**Important:** keep `release.p12` and its password backed up somewhere safe.
+**Important:** keep `key.p12` and its password backed up somewhere safe.
 
 You only need to run `setup-keys.ps1` once.
 
