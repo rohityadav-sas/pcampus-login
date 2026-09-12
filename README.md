@@ -58,12 +58,12 @@ Run:
 
 ```powershell
 cd pcampus-login
-.\setup.ps1
+.\setup-environment.ps1
 ```
 
 The first setup can take several minutes because Java and Android SDK files may need to be downloaded and extracted. The script reads `compileSdk` and an optional Build Tools pin from the app, and uses the latest Android command-line tools. Without a pin, Android Gradle Plugin selects its compatible Build Tools version.
 
-The scripts find the Android application module automatically. A project with more than one application module can select one with `-Module app` or a Gradle path such as `-Module :mobile`. This option works with `setup.ps1`, `apk.ps1`, and `update-icon.ps1`.
+The scripts find the Android application module automatically. A project with more than one application module can select one with `-Module app` or a Gradle path such as `-Module :mobile`. This option works with `setup-environment.ps1`, `apk.ps1`, and `update-icon.ps1`.
 
 ### 3. Build a Debug APK
 
@@ -152,7 +152,7 @@ Release:
 
 | Command | What it does |
 | --- | --- |
-| `.\setup.ps1` | Sets up Java and the Android SDK |
+| `.\setup-environment.ps1` | Sets up Java and the Android SDK |
 | `.\setup-keys.ps1` | Creates the private release signing key once |
 | `.\apk.ps1` | Builds a Debug APK |
 | `.\apk.ps1 -Debug` | Builds a Debug APK |
