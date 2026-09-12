@@ -191,7 +191,6 @@ function Write-KeystoreProperties {
     $relative = $KeystoreRelativePath -replace '\\', '/'
 
     $lines = @(
-        'storeType=PKCS12'
         "storeFile=$(Escape-JavaPropertyValue $relative)"
         "storePassword=$(Escape-JavaPropertyValue $Password)"
         "keyAlias=$(Escape-JavaPropertyValue $KeyAlias)"
@@ -261,12 +260,9 @@ if ($existingConfig) {
         $existingPath = Join-Path $PSScriptRoot ($existingStoreFile -replace '/', '\')
 
         if (Test-Path -LiteralPath $existingPath) {
-            $existingType = if ($existingConfig['storeType']) { $existingConfig['storeType'] } else { 'unspecified/JDK default' }
-
             Write-Host ''
             Write-Log 'Release signing is already configured.' 'WARN'
             Write-Host "Keystore: $existingPath" -ForegroundColor Cyan
-            Write-Host "Type: $existingType" -ForegroundColor Cyan
             if ($existingConfig['keyAlias']) {
                 Write-Host "Alias: $($existingConfig['keyAlias'])" -ForegroundColor Cyan
             }
