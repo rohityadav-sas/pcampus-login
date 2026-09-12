@@ -1,5 +1,9 @@
 [CmdletBinding()]
-param([Parameter(Mandatory)][string]$Source, [string]$Background = '#FFFFFF')
+param(
+    [Parameter(Mandatory)][string]$Source,
+    [Parameter(Mandatory)][string]$ResPath,
+    [string]$Background = '#FFFFFF'
+)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
@@ -21,7 +25,7 @@ try {
         $offset += 12 + $length
         if ($kind -eq 'IEND') { break }
     }
-    $res = Join-Path (Split-Path $PSScriptRoot -Parent) 'app\src\main\res'
+    $res = $ResPath
     function Save-Icon([string]$relative, [int]$size, [bool]$opaque) {
         $destination = Join-Path $res $relative
         New-Item -ItemType Directory -Force (Split-Path $destination) | Out-Null
