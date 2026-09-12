@@ -197,9 +197,7 @@ Login can sometimes be delayed by:
 
 ## ⚠️ Android compatibility
 
-Version 1.2 targets API 36 (Android 16) and retains minimum API 23 (Android 6), including Android 7. It no longer relies on the old manifest connectivity broadcast or requires an outdated-target installation bypass on Android 15/16.
-
-The new background registration uses an API available since Android 6. Builds and lint pass, but live Android 7 and Android 15/16 login tests are still pending. Manufacturer background restrictions can still affect event delivery.
+Version 1.3.1 supports installation from Android 6 and targets Android 16. This **Root** variant needs Magisk or another working `su` provider. Its root helper listens for Wi-Fi address changes through Android's `ip monitor` command and wakes the app only when an address changes; it needs no permanent notification. Grant root access when asked. The device must provide `ip monitor` and use a `wlan` interface name. Reboot recovery and Android 15/16 login behavior still need live-device testing.
 
 ## 🔐 Privacy and security
 
