@@ -120,14 +120,27 @@ function Stop-Script {
 }
 
 function Stop-InstallFailure {
-    param([Parameter(Mandatory)][string]$Output)
+    param(
+        [Parameter(Mandatory)][string]$Output,
+        [string]$PackageName
+    )
 
     if ($Output -match 'INSTALL_FAILED_UPDATE_INCOMPATIBLE|signatures do not match') {
+        if (-not $PackageName) {
+            Stop-Script 'Installed app uses a different signing key.' @"
+Uninstall the existing version of this app, then run this command again:
+
+  .\apk.ps1 -Release -Install
+
+Warning: uninstalling removes that app's saved data.
+"@
+        }
+
         Stop-Script 'Installed app uses a different signing key.' @"
-The existing wifi.login.auto app was signed with another key.
+The existing $PackageName app was signed with another key.
 Uninstall the old app, then run this command again:
 
-  adb uninstall wifi.login.auto
+  adb uninstall $PackageName
   .\apk.ps1 -Release -Install
 
 Warning: uninstalling removes that app's saved data.
@@ -343,6 +356,28 @@ function Get-BuiltArtifact {
     return $candidates | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 }
 
+function Get-ApkPackageName {
+    param([Parameter(Mandatory)][IO.FileInfo]$Apk)
+
+    $metadataPath = Join-Path $Apk.DirectoryName 'output-metadata.json'
+    if (-not (Test-Path -LiteralPath $metadataPath -PathType Leaf)) {
+        return $null
+    }
+
+    try {
+        $metadata = Get-Content -LiteralPath $metadataPath -Raw | ConvertFrom-Json
+        $packageName = [string]$metadata.applicationId
+        if ($packageName -match '^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$') {
+            return $packageName
+        }
+    }
+    catch {
+        return $null
+    }
+
+    return $null
+}
+
 if (-not (Test-Path -LiteralPath $GradleWrapper)) {
     Stop-Script 'Gradle wrapper is missing.' $GradleWrapper
 }
@@ -506,7 +541,7 @@ $adbOutput = @($adbInstall.StdOut, $adbInstall.StdErr) | Where-Object { $_ }
 
 if ($adbInstall.ExitCode -ne 0) {
     $details = $adbOutput -join [Environment]::NewLine
-    Stop-InstallFailure -Output $details
+    Stop-InstallFailure -Output $details -PackageName (Get-ApkPackageName -Apk $apk)
 }
 
 Write-Log 'APK installed successfully using ADB.' 'OK'
