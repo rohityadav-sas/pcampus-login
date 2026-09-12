@@ -193,7 +193,9 @@ Login can sometimes be delayed by:
 
 ## ⚠️ Android compatibility
 
-The app supports installation from Android 6 and targets Android 6's app behavior. This **Legacy** variant listens for Wi-Fi connection broadcasts and has no permanent notification. It is intended for Android 6–14; Android 15 and newer normally block installation of apps with this old target unless the user bypasses that restriction. Background restrictions may still delay or prevent automatic login.
+The app supports installation from Android 6 to 14. This **Legacy** variant listens for Wi-Fi connection broadcasts and has no permanent notification.
+
+Android 15 and newer normally block installation of apps with this old target unless the user bypasses that restriction. Background restrictions may still delay or prevent automatic login.
 
 ## 🔐 Privacy and security
 
