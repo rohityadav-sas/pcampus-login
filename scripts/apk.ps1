@@ -1,4 +1,4 @@
-﻿param(
+param(
     [switch]$Debug,
     [switch]$Release,
     [switch]$Aab,
@@ -9,13 +9,14 @@
 )
 
 Set-StrictMode -Version Latest
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
 $ErrorActionPreference = 'Stop'
 
 # Validate manually so invalid choices produce a concise error, not a binding dump.
 if ($PSBoundParameters.ContainsKey('Icon')) {
     $Icon = $Icon.Trim().ToLowerInvariant()
     if ($Icon -notin @('png', 'svg')) {
-        Write-Host '[ERROR] -Icon must be png or svg. Example: .\apk.ps1 -Release -Icon png' -ForegroundColor Red
+        Write-Host '[ERROR] -Icon must be png or svg. Example: .\scripts\apk.ps1 -Release -Icon png' -ForegroundColor Red
         exit 1
     }
     if ($PSBoundParameters.ContainsKey('IconSource')) {
@@ -29,7 +30,7 @@ if ($PSBoundParameters.ContainsKey('IconSource') -and [string]::IsNullOrWhiteSpa
     exit 1
 }
 if ($IconSource) {
-    $iconPath = if ([IO.Path]::IsPathRooted($IconSource)) { $IconSource } else { Join-Path $PSScriptRoot $IconSource }
+    $iconPath = if ([IO.Path]::IsPathRooted($IconSource)) { $IconSource } else { Join-Path $ProjectRoot $IconSource }
     if (-not (Test-Path -LiteralPath $iconPath -PathType Leaf)) {
         Write-Host "[ERROR] Icon file not found: $iconPath" -ForegroundColor Red
         exit 1
@@ -58,9 +59,9 @@ if ($Aab -and $Install) {
 $Variant = if ($Release -or $Aab) { 'Release' } else { 'Debug' }
 $VariantLower = $Variant.ToLowerInvariant()
 $ArtifactType = if ($Aab) { 'AAB' } else { 'APK' }
-. (Join-Path $PSScriptRoot 'scripts\android-project.ps1')
-$ModuleInfo = Get-AndroidApplicationModule -ProjectRoot $PSScriptRoot -Module $Module
-$GradleWrapper = Join-Path $PSScriptRoot 'gradlew.bat'
+. (Join-Path $ProjectRoot 'scripts\android-project.ps1')
+$ModuleInfo = Get-AndroidApplicationModule -ProjectRoot $ProjectRoot -Module $Module
+$GradleWrapper = Join-Path $ProjectRoot 'gradlew.bat'
 $ArtifactRoot = Join-Path $ModuleInfo.Path $(if ($Aab) { 'build\outputs\bundle' } else { 'build\outputs\apk' })
 
 function Write-Log {
@@ -122,7 +123,7 @@ function Stop-InstallFailure {
             Stop-Script 'Installed app uses a different signing key.' @"
 Uninstall the existing version of this app, then run this command again:
 
-  .\apk.ps1 -Release -Install
+  .\scripts\apk.ps1 -Release -Install
 
 Warning: uninstalling removes that app's saved data.
 "@
@@ -133,7 +134,7 @@ The existing $PackageName app was signed with another key.
 Uninstall the old app, then run this command again:
 
   adb uninstall $PackageName
-  .\apk.ps1 -Release -Install
+  .\scripts\apk.ps1 -Release -Install
 
 Warning: uninstalling removes that app's saved data.
 "@
@@ -217,7 +218,7 @@ function Get-ProjectSdkPath {
         [Environment]::GetEnvironmentVariable('ANDROID_HOME', 'Machine')
     ) | Where-Object { $_ }
 
-    $localProperties = Join-Path $PSScriptRoot 'local.properties'
+    $localProperties = Join-Path $ProjectRoot 'local.properties'
     if (Test-Path -LiteralPath $localProperties) {
         $sdkLine = Get-Content -LiteralPath $localProperties -ErrorAction SilentlyContinue |
             Where-Object { $_ -match '^\s*sdk\.dir\s*=' } |
@@ -268,7 +269,7 @@ function Find-AndroidCli {
 }
 
 function Get-ReleaseSigningStatus {
-    $propertiesPath = Join-Path $PSScriptRoot 'keystore.properties'
+    $propertiesPath = Join-Path $ProjectRoot 'keystore.properties'
 
     if (-not (Test-Path -LiteralPath $propertiesPath)) {
         return [pscustomobject]@{
@@ -306,7 +307,7 @@ function Get-ReleaseSigningStatus {
         $storeFile
     }
     else {
-        Join-Path $PSScriptRoot $storeFile
+        Join-Path $ProjectRoot $storeFile
     }
 
     if (-not (Test-Path -LiteralPath $keystorePath -PathType Leaf)) {
@@ -378,28 +379,28 @@ if (-not $javaAvailable) {
     $javaAvailable = $null -ne (Get-Command java.exe -ErrorAction SilentlyContinue)
 }
 if (-not $javaAvailable) {
-    Stop-Script 'Java is not configured.' 'Run .\setup-environment.ps1, then retry.'
+    Stop-Script 'Java is not configured.' 'Run .\scripts\setup-environment.ps1, then retry.'
 }
 
 $SdkPath = Get-ProjectSdkPath
 if (-not $SdkPath) {
-    Stop-Script 'Android SDK is not configured.' 'Run .\setup-environment.ps1, then retry.'
+    Stop-Script 'Android SDK is not configured.' 'Run .\scripts\setup-environment.ps1, then retry.'
 }
 
 if ($Release -or $Aab) {
     $signingStatus = Get-ReleaseSigningStatus
     if (-not $signingStatus.Ready) {
-        $retryCommand = if ($Aab) { '.\apk.ps1 -Aab' } else { '.\apk.ps1 -Release' }
-        Stop-Script 'Release signing is not configured.' "$($signingStatus.Reason)`nRun .\setup-keys.ps1, then retry $retryCommand."
+        $retryCommand = if ($Aab) { '.\scripts\apk.ps1 -Aab' } else { '.\scripts\apk.ps1 -Release' }
+        Stop-Script 'Release signing is not configured.' "$($signingStatus.Reason)`nRun .\scripts\setup-keys.ps1, then retry $retryCommand."
     }
 }
 
 Write-Log "Building $Variant $ArtifactType..." 'BUILD'
-& (Join-Path $PSScriptRoot 'update-icon.ps1') -Source $IconSource -Module $ModuleInfo.RelativePath
+& (Join-Path $ProjectRoot 'scripts\update-icon.ps1') -Source $IconSource -Module $ModuleInfo.RelativePath
 if ($LASTEXITCODE -ne 0) { exit 1 }
 $timer = [Diagnostics.Stopwatch]::StartNew()
 
-Push-Location -LiteralPath $PSScriptRoot
+Push-Location -LiteralPath $ProjectRoot
 try {
     if ($Aab) {
         & $GradleWrapper "$($ModuleInfo.GradlePath):testDebugUnitTest" "$($ModuleInfo.GradlePath):lintRelease" "$($ModuleInfo.GradlePath):bundleRelease"
@@ -463,7 +464,7 @@ Write-Log 'Checking connected Android device...' 'CHECK'
 
 $adb = Find-Adb -SdkPath $SdkPath
 if (-not $adb) {
-    Stop-Script 'ADB was not found.' 'Run .\setup-environment.ps1, then retry.'
+    Stop-Script 'ADB was not found.' 'Run .\scripts\setup-environment.ps1, then retry.'
 }
 
 $adbStart = Invoke-NativeCaptured -FilePath $adb -Arguments @('start-server')
