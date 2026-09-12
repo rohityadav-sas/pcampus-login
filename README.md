@@ -197,7 +197,7 @@ Login can sometimes be delayed by:
 
 ## ⚠️ Android compatibility
 
-The app supports installation from Android 6 and targets Android 16. This **Modern** variant uses Android network callbacks: a live callback while the app is running and a one-time wake-up subscription for Wi-Fi events. It does not keep a permanent notification. If Android stops or freezes the app, automatic login may not run until you open it again. Android 15/16 login behavior still needs live-device testing.
+The app supports installation from Android 6-16. This **Modern** variant uses Android network callbacks: a live callback while the app is running and a one-time wake-up subscription for Wi-Fi events. It does not keep a permanent notification.
 
 ## 🔐 Privacy and security
 
