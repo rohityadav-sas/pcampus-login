@@ -3,7 +3,6 @@
     [switch]$Release,
     [switch]$Install,
     [string]$IconSource = '',
-    [Alias('Image')]
     [string]$Icon = ''
 )
 
