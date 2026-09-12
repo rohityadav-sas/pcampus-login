@@ -3,7 +3,7 @@
     [string]$KeystoreRelativePath = 'signing/release.p12',
     [int]$KeySize = 3072,
     [int]$ValidityDays = 10000,
-    [int]$MinimumPasswordLength = 12
+    [int]$MinimumPasswordLength = 6
 )
 
 Set-StrictMode -Version Latest
