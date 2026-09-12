@@ -6,16 +6,17 @@ param(
 )
 
 Set-StrictMode -Version Latest
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
 $ErrorActionPreference = 'Stop'
 trap {
     Write-Host "[ERROR] $($_.Exception.GetBaseException().Message)" -ForegroundColor Red
     exit 1
 }
-. (Join-Path $PSScriptRoot 'scripts\android-project.ps1')
-$moduleInfo = Get-AndroidApplicationModule -ProjectRoot $PSScriptRoot -Module $Module
+. (Join-Path $ProjectRoot 'scripts\android-project.ps1')
+$moduleInfo = Get-AndroidApplicationModule -ProjectRoot $ProjectRoot -Module $Module
 $res = Join-Path $moduleInfo.Path 'src\main\res'
 if (-not $Source) {
-    $candidates = @('icon.svg', 'icon.png' | ForEach-Object { Join-Path $PSScriptRoot "assets\icon\$_" } | Where-Object { Test-Path -LiteralPath $_ })
+    $candidates = @('icon.svg', 'icon.png' | ForEach-Object { Join-Path $ProjectRoot "assets\icon\$_" } | Where-Object { Test-Path -LiteralPath $_ })
     if ($candidates.Count -eq 0) { throw 'Add assets/icon/icon.svg or a 1024x1024 icon.png. See README.md.' }
     if ($candidates.Count -gt 1) {
         if ($env:CI -or [Environment]::GetCommandLineArgs() -match '^-NonInteractive$') {
@@ -31,14 +32,14 @@ if (-not $Source) {
             if ($choice -notin @('1', '2', 'svg', 'png')) { Write-Host 'Please enter 1 for SVG, 2 for PNG, or Q to cancel.' -ForegroundColor Yellow }
         } while ($choice -notin @('1', '2', 'svg', 'png'))
         $name = if ($choice -in @('1', 'svg')) { 'icon.svg' } else { 'icon.png' }
-        $Source = Join-Path $PSScriptRoot "assets\icon\$name"
+        $Source = Join-Path $ProjectRoot "assets\icon\$name"
     } else { $Source = $candidates[0] }
 } elseif (-not [IO.Path]::IsPathRooted($Source)) {
-    $Source = Join-Path $PSScriptRoot $Source
+    $Source = Join-Path $ProjectRoot $Source
 }
 if (-not (Test-Path -LiteralPath $Source -PathType Leaf)) { throw "Icon file not found: $Source" }
 if ([IO.Path]::GetExtension($Source) -ieq '.png') {
-    & (Join-Path $PSScriptRoot 'scripts\png-icon.ps1') -Source $Source -ResPath $res -Background $Background
+    & (Join-Path $ProjectRoot 'scripts\png-icon.ps1') -Source $Source -ResPath $res -Background $Background
     exit 0
 }
 if ([IO.Path]::GetExtension($Source) -ine '.svg') { throw 'Only .svg and .png icons are supported. See README.md.' }
