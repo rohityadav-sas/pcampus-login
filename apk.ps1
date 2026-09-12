@@ -2,11 +2,42 @@
     [switch]$Debug,
     [switch]$Release,
     [switch]$Install,
-    [string]$IconSource = ''
+    [string]$IconSource = '',
+    [Alias('Image')]
+    [string]$Icon = ''
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+# Validate manually so invalid choices produce a concise error, not a binding dump.
+if ($PSBoundParameters.ContainsKey('Icon')) {
+    $Icon = $Icon.Trim().ToLowerInvariant()
+    if ($Icon -notin @('png', 'svg')) {
+        Write-Host '[ERROR] -Icon must be png or svg. Example: .\apk.ps1 -Release -Icon png' -ForegroundColor Red
+        exit 1
+    }
+    if ($PSBoundParameters.ContainsKey('IconSource')) {
+        Write-Host '[ERROR] Use either -Icon or -IconSource, not both.' -ForegroundColor Red
+        exit 1
+    }
+    $IconSource = "assets/icon/icon.$Icon"
+}
+if ($PSBoundParameters.ContainsKey('IconSource') -and [string]::IsNullOrWhiteSpace($IconSource)) {
+    Write-Host '[ERROR] -IconSource needs a file path. Example: -IconSource assets/icon/icon.png' -ForegroundColor Red
+    exit 1
+}
+if ($IconSource) {
+    $iconPath = if ([IO.Path]::IsPathRooted($IconSource)) { $IconSource } else { Join-Path $PSScriptRoot $IconSource }
+    if (-not (Test-Path -LiteralPath $iconPath -PathType Leaf)) {
+        Write-Host "[ERROR] Icon file not found: $iconPath" -ForegroundColor Red
+        exit 1
+    }
+    if ([IO.Path]::GetExtension($iconPath) -notin @('.png', '.svg')) {
+        Write-Host '[ERROR] Icon source must be a .png or .svg file.' -ForegroundColor Red
+        exit 1
+    }
+}
 
 if ($Debug -and $Release) {
     Write-Host '[ERROR] Choose only one build type: -Debug or -Release.' -ForegroundColor Red
