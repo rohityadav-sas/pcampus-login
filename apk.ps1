@@ -378,12 +378,12 @@ if (-not $javaAvailable) {
     $javaAvailable = $null -ne (Get-Command java.exe -ErrorAction SilentlyContinue)
 }
 if (-not $javaAvailable) {
-    Stop-Script 'Java is not configured.' 'Run .\setup.ps1, then retry.'
+    Stop-Script 'Java is not configured.' 'Run .\setup-environment.ps1, then retry.'
 }
 
 $SdkPath = Get-ProjectSdkPath
 if (-not $SdkPath) {
-    Stop-Script 'Android SDK is not configured.' 'Run .\setup.ps1, then retry.'
+    Stop-Script 'Android SDK is not configured.' 'Run .\setup-environment.ps1, then retry.'
 }
 
 if ($Release -or $Aab) {
@@ -463,7 +463,7 @@ Write-Log 'Checking connected Android device...' 'CHECK'
 
 $adb = Find-Adb -SdkPath $SdkPath
 if (-not $adb) {
-    Stop-Script 'ADB was not found.' 'Run .\setup.ps1, then retry.'
+    Stop-Script 'ADB was not found.' 'Run .\setup-environment.ps1, then retry.'
 }
 
 $adbStart = Invoke-NativeCaptured -FilePath $adb -Arguments @('start-server')
