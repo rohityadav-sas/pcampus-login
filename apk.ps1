@@ -4,7 +4,8 @@
     [switch]$Aab,
     [switch]$Install,
     [string]$IconSource = '',
-    [string]$Icon = ''
+    [string]$Icon = '',
+    [string]$Module = ''
 )
 
 Set-StrictMode -Version Latest
@@ -57,19 +58,10 @@ if ($Aab -and $Install) {
 $Variant = if ($Release -or $Aab) { 'Release' } else { 'Debug' }
 $VariantLower = $Variant.ToLowerInvariant()
 $ArtifactType = if ($Aab) { 'AAB' } else { 'APK' }
+. (Join-Path $PSScriptRoot 'scripts\android-project.ps1')
+$ModuleInfo = Get-AndroidApplicationModule -ProjectRoot $PSScriptRoot -Module $Module
 $GradleWrapper = Join-Path $PSScriptRoot 'gradlew.bat'
-$ArtifactRoot = if ($Aab) {
-    Join-Path $PSScriptRoot 'app\build\outputs\bundle'
-}
-else {
-    Join-Path $PSScriptRoot 'app\build\outputs\apk'
-}
-$ExpectedArtifact = if ($Aab) {
-    Join-Path $ArtifactRoot 'release\app-release.aab'
-}
-else {
-    Join-Path $ArtifactRoot "$VariantLower\app-$VariantLower.apk"
-}
+$ArtifactRoot = Join-Path $ModuleInfo.Path $(if ($Aab) { 'build\outputs\bundle' } else { 'build\outputs\apk' })
 
 function Write-Log {
     param(
@@ -333,10 +325,6 @@ function Get-ReleaseSigningStatus {
 }
 
 function Get-BuiltArtifact {
-    if (Test-Path -LiteralPath $ExpectedArtifact) {
-        return Get-Item -LiteralPath $ExpectedArtifact
-    }
-
     if (-not (Test-Path -LiteralPath $ArtifactRoot)) {
         return $null
     }
@@ -407,17 +395,17 @@ if ($Release -or $Aab) {
 }
 
 Write-Log "Building $Variant $ArtifactType..." 'BUILD'
-& (Join-Path $PSScriptRoot 'update-icon.ps1') -Source $IconSource
+& (Join-Path $PSScriptRoot 'update-icon.ps1') -Source $IconSource -Module $ModuleInfo.RelativePath
 if ($LASTEXITCODE -ne 0) { exit 1 }
 $timer = [Diagnostics.Stopwatch]::StartNew()
 
 Push-Location -LiteralPath $PSScriptRoot
 try {
     if ($Aab) {
-        & $GradleWrapper ':app:testDebugUnitTest' ':app:lintRelease' ':app:bundleRelease'
+        & $GradleWrapper "$($ModuleInfo.GradlePath):testDebugUnitTest" "$($ModuleInfo.GradlePath):lintRelease" "$($ModuleInfo.GradlePath):bundleRelease"
     }
     else {
-        & $GradleWrapper ":app:assemble$Variant"
+        & $GradleWrapper "$($ModuleInfo.GradlePath):assemble$Variant"
     }
     $gradleExitCode = $LASTEXITCODE
 }

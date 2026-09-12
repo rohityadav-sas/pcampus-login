@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [string]$Source = '',
-    [string]$Background = '#FFFFFF'
+    [string]$Background = '#FFFFFF',
+    [string]$Module = ''
 )
 
 Set-StrictMode -Version Latest
@@ -10,6 +11,9 @@ trap {
     Write-Host "[ERROR] $($_.Exception.GetBaseException().Message)" -ForegroundColor Red
     exit 1
 }
+. (Join-Path $PSScriptRoot 'scripts\android-project.ps1')
+$moduleInfo = Get-AndroidApplicationModule -ProjectRoot $PSScriptRoot -Module $Module
+$res = Join-Path $moduleInfo.Path 'src\main\res'
 if (-not $Source) {
     $candidates = @('icon.svg', 'icon.png' | ForEach-Object { Join-Path $PSScriptRoot "assets\icon\$_" } | Where-Object { Test-Path -LiteralPath $_ })
     if ($candidates.Count -eq 0) { throw 'Add assets/icon/icon.svg or a 1024x1024 icon.png. See README.md.' }
@@ -34,7 +38,7 @@ if (-not $Source) {
 }
 if (-not (Test-Path -LiteralPath $Source -PathType Leaf)) { throw "Icon file not found: $Source" }
 if ([IO.Path]::GetExtension($Source) -ieq '.png') {
-    & (Join-Path $PSScriptRoot 'scripts\png-icon.ps1') -Source $Source -Background $Background
+    & (Join-Path $PSScriptRoot 'scripts\png-icon.ps1') -Source $Source -ResPath $res -Background $Background
     exit 0
 }
 if ([IO.Path]::GetExtension($Source) -ine '.svg') { throw 'Only .svg and .png icons are supported. See README.md.' }
@@ -89,10 +93,9 @@ foreach ($path in $paths) {
 $scale = 44.0 / [Math]::Max($numbers[2], $numbers[3])
 $x = (108 - $numbers[2] * $scale) / 2
 $y = (108 - $numbers[3] * $scale) / 2
-$group = '<group android:scaleX="' + $scale.ToString($culture) + '" android:scaleY="' + $scale.ToString($culture) + '" android:translateX="' + $x.ToString($culture) + '" android:translateY="' + $y.ToString($culture) + '">' + "`n" + $body + '</group>'
+$group = '<group android:scaleX="' + $scale.ToString('G15', $culture) + '" android:scaleY="' + $scale.ToString('G15', $culture) + '" android:translateX="' + $x.ToString('G15', $culture) + '" android:translateY="' + $y.ToString('G15', $culture) + '">' + "`n" + $body + '</group>'
 $header = '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">'
 $backgroundPath = '<path android:fillColor="' + (Color $Background) + '" android:pathData="M0,0h108v108h-108z" />'
-$res = Join-Path $PSScriptRoot 'app\src\main\res'
 $files = @{
     'drawable\ic_launcher_foreground.xml' = $header + $group + '</vector>'
     'drawable\ic_launcher_background.xml' = $header + $backgroundPath + '</vector>'

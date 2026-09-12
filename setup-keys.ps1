@@ -3,7 +3,8 @@
     [string]$KeystoreRelativePath = 'signing/key.p12',
     [int]$KeySize = 3072,
     [int]$ValidityDays = 10000,
-    [int]$MinimumPasswordLength = 6
+    [int]$MinimumPasswordLength = 6,
+    [string]$DistinguishedName = ''
 )
 
 Set-StrictMode -Version Latest
@@ -12,6 +13,12 @@ $ErrorActionPreference = 'Stop'
 $PropertiesPath = Join-Path $PSScriptRoot 'keystore.properties'
 $KeystorePath = Join-Path $PSScriptRoot ($KeystoreRelativePath -replace '/', '\')
 $SigningDirectory = Split-Path -Parent $KeystorePath
+. (Join-Path $PSScriptRoot 'scripts\android-project.ps1')
+if (-not $DistinguishedName) {
+    $projectName = Get-AndroidProjectName -ProjectRoot $PSScriptRoot
+    $safeProjectName = $projectName -replace '[,=+<>#;"\\]', '_'
+    $DistinguishedName = "CN=$safeProjectName Release"
+}
 
 function Write-Log {
     param(
@@ -288,7 +295,7 @@ $password = $null
 
 try {
     $password = Read-StrongPassword
-    $env:PCAMPUS_RELEASE_PASSWORD = $password
+    $env:ANDROID_RELEASE_PASSWORD = $password
 
     Write-Log 'Creating PKCS12 Android release signing key...' 'CREATE'
 
@@ -300,9 +307,9 @@ try {
         '-keyalg', 'RSA',
         '-keysize', "$KeySize",
         '-validity', "$ValidityDays",
-        '-dname', 'CN=Campus Login Release',
-        '-storepass:env', 'PCAMPUS_RELEASE_PASSWORD',
-        '-keypass:env', 'PCAMPUS_RELEASE_PASSWORD'
+        '-dname', $DistinguishedName,
+        '-storepass:env', 'ANDROID_RELEASE_PASSWORD',
+        '-keypass:env', 'ANDROID_RELEASE_PASSWORD'
     )
 
     $result = Invoke-NativeCaptured -FilePath $keytool -Arguments $arguments
@@ -326,7 +333,7 @@ try {
         '-keystore', $KeystorePath,
         '-storetype', 'PKCS12',
         '-alias', $Alias,
-        '-storepass:env', 'PCAMPUS_RELEASE_PASSWORD'
+        '-storepass:env', 'ANDROID_RELEASE_PASSWORD'
     )
 
     if ($verify.ExitCode -ne 0) {
@@ -347,7 +354,7 @@ catch {
     throw
 }
 finally {
-    Remove-Item Env:PCAMPUS_RELEASE_PASSWORD -ErrorAction SilentlyContinue
+    Remove-Item Env:ANDROID_RELEASE_PASSWORD -ErrorAction SilentlyContinue
     $password = $null
 }
 

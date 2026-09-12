@@ -20,8 +20,6 @@ if (gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = tr
 android {
     namespace = "wifi.login.auto"
     compileSdk = 36
-    buildToolsVersion = "36.0.0"
-
     defaultConfig {
         applicationId = "wifi.login.android15"
         minSdk = 23

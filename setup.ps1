@@ -2,8 +2,9 @@
 param(
     [int]$MinimumJavaVersion = 17,
     [int]$MaximumJavaVersion = 24,
-    [int]$CompileSdk = 36,
-    [string]$BuildToolsVersion = '36.0.0'
+    [int]$CompileSdk = 0,
+    [string]$BuildToolsVersion = '',
+    [string]$Module = ''
 )
 
 Set-StrictMode -Version Latest
@@ -15,6 +16,14 @@ $DefaultAndroidSdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk'
 $JavaRoot = Join-Path $env:LOCALAPPDATA 'Programs\Java'
 $OracleJdkUrl = 'https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.zip'
 $AndroidCliInstallerUrl = 'https://dl.google.com/android/cli/latest/windows_x86_64/install.cmd'
+
+. (Join-Path $PSScriptRoot 'scripts\android-project.ps1')
+$moduleInfo = Get-AndroidApplicationModule -ProjectRoot $PSScriptRoot -Module $Module
+$projectRequirements = Get-AndroidProjectRequirements -ModuleInfo $moduleInfo
+if ($CompileSdk -le 0) { $CompileSdk = $projectRequirements.CompileSdk }
+if (-not $BuildToolsVersion -and $projectRequirements.BuildToolsVersion) {
+    $BuildToolsVersion = $projectRequirements.BuildToolsVersion
+}
 
 function Write-Log {
     param(
@@ -435,7 +444,10 @@ else {
 
 $platformTools = Join-Path $AndroidSdk 'platform-tools\adb.exe'
 $platformJar = Join-Path $AndroidSdk "platforms\android-$CompileSdk\android.jar"
-$buildTools = Join-Path $AndroidSdk "build-tools\$BuildToolsVersion\aapt2.exe"
+$buildTools = if ($BuildToolsVersion) { Join-Path $AndroidSdk "build-tools\$BuildToolsVersion\aapt2.exe" } else { $null }
+if (-not $BuildToolsVersion) {
+    Write-Log 'Build Tools version is managed by the Android Gradle Plugin.' 'INFO'
+}
 
 function Get-MissingSdkPackages {
     $missing = @()
@@ -446,7 +458,7 @@ function Get-MissingSdkPackages {
     if (-not (Test-Path -LiteralPath $platformJar -PathType Leaf)) {
         $missing += "platforms/android-$CompileSdk"
     }
-    if (-not (Test-Path -LiteralPath $buildTools -PathType Leaf)) {
+    if ($buildTools -and -not (Test-Path -LiteralPath $buildTools -PathType Leaf)) {
         $missing += "build-tools/$BuildToolsVersion"
     }
 
@@ -490,11 +502,8 @@ else {
     Write-Log 'Required Android SDK packages are already installed; no SDK download is needed.' 'OK'
 }
 
-$requiredFiles = @(
-    $platformTools,
-    $platformJar,
-    $buildTools
-)
+$requiredFiles = @($platformTools, $platformJar)
+if ($buildTools) { $requiredFiles += $buildTools }
 foreach ($requiredFile in $requiredFiles) {
     if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {
         throw "Required Android SDK component is still missing: $requiredFile"
