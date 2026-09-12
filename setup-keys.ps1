@@ -1,6 +1,6 @@
 ﻿param(
     [string]$Alias = 'release',
-    [string]$KeystoreRelativePath = 'signing/release.p12',
+    [string]$KeystoreRelativePath = 'signing/key.p12',
     [int]$KeySize = 3072,
     [int]$ValidityDays = 10000,
     [int]$MinimumPasswordLength = 6
