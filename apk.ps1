@@ -414,11 +414,10 @@ else {
 
 Write-Host ''
 Write-Log "$Variant $ArtifactType ready in $($timer.Elapsed.TotalSeconds.ToString('0.0'))s" 'OK'
-Write-KeyValue 'Path' $(if ($Aab) { $artifact.FullName } else { $artifact.DirectoryName }) Cyan
+Write-KeyValue 'Path' $artifact.DirectoryName Cyan
 Write-KeyValue 'Size' $displaySize Green
 
 if ($Aab) {
-    Write-Log 'Nothing was uploaded. Use this AAB in your intended Google Play release.' 'INFO'
     return
 }
 
