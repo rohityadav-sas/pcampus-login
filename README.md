@@ -140,7 +140,7 @@ Put `icon.svg` or a **1024×1024 still PNG** at `assets/icon/`, then build:
 .pk.ps1 -Release -Icon svg
 ```
 
-`-Image` is an alias for `-Icon`; values are case-insensitive. Without an explicit choice, one available file is selected automatically; if both exist, a menu asks **1 = SVG, 2 = PNG, Q = cancel**. For a custom path, use `-IconSource path/to/icon.png` instead. Do not combine it with `-Icon`.
+Values for `-Icon` are case-insensitive. Without an explicit choice, one available file is selected automatically; if both exist, a menu asks **1 = SVG, 2 = PNG, Q = cancel**. For a custom path, use `-IconSource path/to/icon.png` instead. Do not combine it with `-Icon`.
 
 PNG keeps its colors; transparency is optional. Invalid dimensions, unsupported files, missing sources and conflicting arguments stop the build with a short error. The generator adds approximately **29.6% padding per side**, so avoid excess blank space in your source. PNG does not generate a custom monochrome layer.
 

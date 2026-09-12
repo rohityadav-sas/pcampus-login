@@ -10,9 +10,9 @@ Place **one** source in `assets/icon/`: `icon.svg` or `icon.png`. Run `./apk.ps1
 .\apk.ps1 -Icon png -Install
 ```
 
-`-Icon` selects `assets/icon/icon.png` or `assets/icon/icon.svg`, relative to the repository even if you run the script elsewhere. Choices are case-insensitive. `-Image` is an alias (`-Image PNG` also works). This skips the menu even when both files exist. Missing files and invalid formats stop with a short error; there is no fallback.
+`-Icon` selects `assets/icon/icon.png` or `assets/icon/icon.svg`, relative to the repository even if you run the script elsewhere. Choices are case-insensitive. This skips the menu even when both files exist. Missing files and invalid formats stop with a short error; there is no fallback.
 
-For a custom filename, use `-IconSource path/to/custom.png` instead. Do not combine `-Icon`/`-Image` with `-IconSource`. Without either argument, the existing automatic selection/menu still applies. The selected image must satisfy the requirements below.
+For a custom filename, use `-IconSource path/to/custom.png` instead. Do not combine `-Icon` with `-IconSource`. Without either argument, the existing automatic selection/menu still applies. The selected image must satisfy the requirements below.
 
 ## PNG requirements
 
