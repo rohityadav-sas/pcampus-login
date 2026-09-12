@@ -197,9 +197,7 @@ Login can sometimes be delayed by:
 
 ## ⚠️ Android compatibility
 
-Version 1.2 targets API 36 (Android 16) and retains minimum API 23 (Android 6), including Android 7. It no longer relies on the old manifest connectivity broadcast or requires an outdated-target installation bypass on Android 15/16.
-
-The new background registration uses an API available since Android 6. Builds and lint pass, but live Android 7 and Android 15/16 login tests are still pending. Manufacturer background restrictions can still affect event delivery.
+Version 1.3.1 supports installation from Android 6 and targets Android 16. This **Modern** variant uses Android network callbacks: a live callback while the app is running and a one-time wake-up subscription for Wi-Fi events. It does not keep a permanent notification. If Android stops or freezes the app, automatic login may not run until you open it again. Android 15/16 login behavior still needs live-device testing.
 
 ## 🔐 Privacy and security
 
