@@ -1,6 +1,7 @@
 ﻿param(
     [switch]$Debug,
     [switch]$Release,
+    [switch]$Aab,
     [switch]$Install,
     [string]$IconSource = '',
     [string]$Icon = ''
@@ -43,11 +44,32 @@ if ($Debug -and $Release) {
     exit 1
 }
 
-$Variant = if ($Release) { 'Release' } else { 'Debug' }
+if ($Aab -and $Debug) {
+    Write-Host '[ERROR] An AAB is always a Release build. Remove -Debug.' -ForegroundColor Red
+    exit 1
+}
+
+if ($Aab -and $Install) {
+    Write-Host '[ERROR] Android cannot install an AAB directly. Remove -Install and upload the AAB to Google Play.' -ForegroundColor Red
+    exit 1
+}
+
+$Variant = if ($Release -or $Aab) { 'Release' } else { 'Debug' }
 $VariantLower = $Variant.ToLowerInvariant()
+$ArtifactType = if ($Aab) { 'AAB' } else { 'APK' }
 $GradleWrapper = Join-Path $PSScriptRoot 'gradlew.bat'
-$ApkRoot = Join-Path $PSScriptRoot 'app\build\outputs\apk'
-$ExpectedApk = Join-Path $ApkRoot "$VariantLower\app-$VariantLower.apk"
+$ArtifactRoot = if ($Aab) {
+    Join-Path $PSScriptRoot 'app\build\outputs\bundle'
+}
+else {
+    Join-Path $PSScriptRoot 'app\build\outputs\apk'
+}
+$ExpectedArtifact = if ($Aab) {
+    Join-Path $ArtifactRoot 'release\app-release.aab'
+}
+else {
+    Join-Path $ArtifactRoot "$VariantLower\app-$VariantLower.apk"
+}
 
 function Write-Log {
     param(
@@ -297,26 +319,27 @@ function Get-ReleaseSigningStatus {
     }
 }
 
-function Get-BuiltApk {
-    if (Test-Path -LiteralPath $ExpectedApk) {
-        return Get-Item -LiteralPath $ExpectedApk
+function Get-BuiltArtifact {
+    if (Test-Path -LiteralPath $ExpectedArtifact) {
+        return Get-Item -LiteralPath $ExpectedArtifact
     }
 
-    if (-not (Test-Path -LiteralPath $ApkRoot)) {
+    if (-not (Test-Path -LiteralPath $ArtifactRoot)) {
         return $null
     }
 
-    $allApks = @(Get-ChildItem -LiteralPath $ApkRoot -Filter '*.apk' -File -Recurse -ErrorAction SilentlyContinue)
-    if ($allApks.Count -eq 0) {
+    $extension = if ($Aab) { '*.aab' } else { '*.apk' }
+    $allArtifacts = @(Get-ChildItem -LiteralPath $ArtifactRoot -Filter $extension -File -Recurse -ErrorAction SilentlyContinue)
+    if ($allArtifacts.Count -eq 0) {
         return $null
     }
 
-    $variantApks = @($allApks | Where-Object {
+    $variantArtifacts = @($allArtifacts | Where-Object {
         $_.FullName -match "[\\/]$([regex]::Escape($VariantLower))[\\/]" -or
         $_.Name -match "(?i)$([regex]::Escape($VariantLower))"
     })
 
-    $candidates = if ($variantApks.Count -gt 0) { $variantApks } else { $allApks }
+    $candidates = if ($variantArtifacts.Count -gt 0) { $variantArtifacts } else { $allArtifacts }
     return $candidates | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 }
 
@@ -340,21 +363,27 @@ if (-not $SdkPath) {
     Stop-Script 'Android SDK is not configured.' 'Run .\setup.ps1, then retry.'
 }
 
-if ($Release) {
+if ($Release -or $Aab) {
     $signingStatus = Get-ReleaseSigningStatus
     if (-not $signingStatus.Ready) {
-        Stop-Script 'Release signing is not configured.' "$($signingStatus.Reason)`nRun .\setup-keys.ps1, then retry .\apk.ps1 -Release."
+        $retryCommand = if ($Aab) { '.\apk.ps1 -Aab' } else { '.\apk.ps1 -Release' }
+        Stop-Script 'Release signing is not configured.' "$($signingStatus.Reason)`nRun .\setup-keys.ps1, then retry $retryCommand."
     }
 }
 
-Write-Log "Building $Variant APK..." 'BUILD'
+Write-Log "Building $Variant $ArtifactType..." 'BUILD'
 & (Join-Path $PSScriptRoot 'update-icon.ps1') -Source $IconSource
 if ($LASTEXITCODE -ne 0) { exit 1 }
 $timer = [Diagnostics.Stopwatch]::StartNew()
 
 Push-Location -LiteralPath $PSScriptRoot
 try {
-    & $GradleWrapper ":app:assemble$Variant"
+    if ($Aab) {
+        & $GradleWrapper ':app:testDebugUnitTest' ':app:lintRelease' ':app:bundleRelease'
+    }
+    else {
+        & $GradleWrapper ":app:assemble$Variant"
+    }
     $gradleExitCode = $LASTEXITCODE
 }
 finally {
@@ -363,27 +392,37 @@ finally {
 }
 
 if ($gradleExitCode -ne 0) {
-    Stop-Script "Gradle $Variant build failed." "Exit code: $gradleExitCode"
+    Stop-Script "Gradle $Variant $ArtifactType build failed." "Exit code: $gradleExitCode"
 }
 
-$apk = Get-BuiltApk
-if (-not $apk) {
-    Stop-Script 'Build finished, but no APK was found.' $ApkRoot
+$artifact = Get-BuiltArtifact
+if (-not $artifact) {
+    Stop-Script "Build finished, but no $ArtifactType was found." $ArtifactRoot
 }
 
-$sizeKb = $apk.Length / 1KB
+if ($artifact.Length -eq 0) {
+    Stop-Script "Build finished, but the $ArtifactType is empty."
+}
+
+$sizeKb = $artifact.Length / 1KB
 if ($sizeKb -gt 1024) {
-    $displaySize = "$([math]::Round($apk.Length / 1MB, 2)) MB"
+    $displaySize = "$([math]::Round($artifact.Length / 1MB, 2)) MB"
 }
 else {
     $displaySize = "$([math]::Round($sizeKb, 2)) KB"
 }
 
 Write-Host ''
-Write-Log "$Variant APK ready in $($timer.Elapsed.TotalSeconds.ToString('0.0'))s" 'OK'
-Write-KeyValue 'Path' $apk.DirectoryName Cyan
+Write-Log "$Variant $ArtifactType ready in $($timer.Elapsed.TotalSeconds.ToString('0.0'))s" 'OK'
+Write-KeyValue 'Path' $(if ($Aab) { $artifact.FullName } else { $artifact.DirectoryName }) Cyan
 Write-KeyValue 'Size' $displaySize Green
 
+if ($Aab) {
+    Write-Log 'Nothing was uploaded. Use this AAB in your intended Google Play release.' 'INFO'
+    return
+}
+
+$apk = $artifact
 $isUnsigned = $apk.Name -match '(?i)unsigned'
 if ($isUnsigned) {
     Write-Log 'The generated release APK is unsigned. Configure release signing before distributing or installing it.' 'WARN'

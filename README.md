@@ -114,6 +114,22 @@ The Release APK will be at this location:
 app\build\outputs\apk\release\app-release.apk
 ```
 
+### 6. Build a Release AAB
+
+For Google Play or another store that accepts Android App Bundles, run:
+
+```powershell
+.\apk.ps1 -Aab
+```
+
+The signed AAB will be at:
+
+```text
+app\build\outputs\bundle\release\app-release.aab
+```
+
+GitHub releases should continue using the Release APK because Android cannot install an AAB directly.
+
 ## 📱 Install directly from PowerShell
 
 If you have an Android phone connected with USB debugging enabled, you can build and install in one command.
@@ -139,6 +155,7 @@ Release:
 | `.\apk.ps1` | Builds a Debug APK |
 | `.\apk.ps1 -Debug` | Builds a Debug APK |
 | `.\apk.ps1 -Release` | Builds the signed Release APK |
+| `.\apk.ps1 -Aab` | Runs tests and release lint, then builds a signed Release AAB |
 | `.\apk.ps1 -Install` | Builds Debug and installs it on a connected phone |
 | `.\apk.ps1 -Release -Install` | Builds Release and installs it on a connected phone |
 
