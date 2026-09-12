@@ -255,7 +255,7 @@ Test-IgnoreRules
 
 $keytool = Get-Keytool
 if (-not $keytool) {
-    throw 'keytool.exe was not found. Run .\setup.ps1 first, then run .\setup-keys.ps1.'
+    throw 'keytool.exe was not found. Run .\setup-environment.ps1 first, then run .\setup-keys.ps1.'
 }
 Write-Log "Using keytool: $keytool" 'OK'
 
