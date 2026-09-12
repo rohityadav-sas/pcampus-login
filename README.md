@@ -191,6 +191,10 @@ Login can sometimes be delayed by:
 - phone manufacturer power-saving features
 - a slow campus portal response
 
+## ⚠️ Android compatibility
+
+Version 1.3.1 supports installation from Android 6 and targets Android 6's app behavior. This **Legacy** variant listens for Wi-Fi connection broadcasts and has no permanent notification. It is intended for Android 6–14; Android 15 and newer normally block installation of apps with this old target unless the user bypasses that restriction. Background restrictions may still delay or prevent automatic login.
+
 ## 🔐 Privacy and security
 
 Your campus username and password are entered and stored on your phone.
