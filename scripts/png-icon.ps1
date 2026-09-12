@@ -10,7 +10,7 @@ if ($bytes.Length -lt 8 -or [BitConverter]::ToString($bytes,0,8) -ne '89-50-4E-4
 try { $inputImage = [Drawing.Image]::FromFile($Source) } catch { throw 'Cannot decode this PNG. Re-export a standard, non-animated 1024x1024 PNG.' }
 try {
     if ($inputImage.Width -ne 1024 -or $inputImage.Height -ne 1024) {
-        throw "PNG must be exactly 1024x1024 pixels; received $($inputImage.Width)x$($inputImage.Height). Export a square 1024x1024 image. See docs/ICONS.md."
+        throw "PNG must be exactly 1024x1024 pixels; received $($inputImage.Width)x$($inputImage.Height). Export a square 1024x1024 image. See README.md."
     }
     # APNG is not supported. Parse chunk headers, not arbitrary pixel bytes.
     $offset = 8
