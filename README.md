@@ -197,7 +197,7 @@ Login can sometimes be delayed by:
 
 ## ⚠️ Android compatibility
 
-Version 1.3.1 supports installation from Android 6 and targets Android 16. This **Root** variant needs Magisk or another working `su` provider. Its root helper listens for Wi-Fi address changes through Android's `ip monitor` command and wakes the app only when an address changes; it needs no permanent notification. Grant root access when asked. The device must provide `ip monitor` and use a `wlan` interface name. Reboot recovery and Android 15/16 login behavior still need live-device testing.
+The app supports installation from Android 6 and targets Android 16. This **Root** variant needs Magisk or another working `su` provider. Its root helper listens for Wi-Fi address changes through Android's `ip monitor` command and wakes the app only when an address changes; it needs no permanent notification. Grant root access when asked. The device must provide `ip monitor` and use a `wlan` interface name. Reboot recovery and Android 15/16 login behavior still need live-device testing.
 
 ## 🔐 Privacy and security
 
