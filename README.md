@@ -197,7 +197,7 @@ Login can sometimes be delayed by:
 
 ## ⚠️ Android compatibility
 
-The app supports installation from Android 6 and targets Android 16. This **Permanent Notification** variant runs a foreground service with a Wi-Fi network callback while automatic login is enabled. The ongoing notification lets Android keep that listener active more reliably. Allow notifications and disable battery restrictions for the app. Manufacturer settings can still stop the service; Android 15/16 login behavior still needs live-device testing.
+The app supports installation from Android 6-16. This **Permanent Notification** variant runs a foreground service with a Wi-Fi network callback while automatic login is enabled. The ongoing notification lets Android keep that listener active more reliably.
 
 ## 🔐 Privacy and security
 
