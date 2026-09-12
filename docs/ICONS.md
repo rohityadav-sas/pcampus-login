@@ -2,6 +2,18 @@
 
 Place **one** source in `assets/icon/`: `icon.svg` or `icon.png`. Run `./apk.ps1 -Release` (or `./apk.ps1` for debug). Icons regenerate before every build using Windows/.NET; no extra installation is required.
 
+## Select the format directly
+
+```powershell
+.\apk.ps1 -Release -Icon png
+.\apk.ps1 -Release -Icon svg
+.\apk.ps1 -Icon png -Install
+```
+
+`-Icon` selects `assets/icon/icon.png` or `assets/icon/icon.svg`, relative to the repository even if you run the script elsewhere. Choices are case-insensitive. `-Image` is an alias (`-Image PNG` also works). This skips the menu even when both files exist. Missing files and invalid formats stop with a short error; there is no fallback.
+
+For a custom filename, use `-IconSource path/to/custom.png` instead. Do not combine `-Icon`/`-Image` with `-IconSource`. Without either argument, the existing automatic selection/menu still applies. The selected image must satisfy the requirements below.
+
 ## PNG requirements
 
 - Exactly **1024 x 1024 pixels**, square, saved as a real PNG. Incorrect dimensions stop the build and show the received size.
