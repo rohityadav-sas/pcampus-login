@@ -12,10 +12,6 @@ A native Android app for signing in to the Pulchowk campus Wi-Fi portal.
 
 [Download v1.3.1 - four signed APKs](https://github.com/rohityadav-sas/pcampus-login/releases/tag/v1.3.1)
 
-Try **Root** first if your phone is rooted; otherwise start with **Permanent Notification**. Next try **Legacy (Android 6-14)**, or **Modern** if you need a newer target without a permanent notification. Modern remains best-effort when Android kills/freezes its process.
-
-See [the APK comparison and setup guide](docs/DOWNLOADS.md) for package names, requirements, tested behavior, updates and source tags. This order is a recommendation, not a measured reliability ranking.
-
 Choose the APK that fits your phone. Try them in this order:
 
 | # | APK | Best for | Branch / package |
